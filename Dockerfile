@@ -36,6 +36,7 @@ RUN \
 	&& adduser -D -s /bin/bash -h /var/www -G laser laser \
 	&& passwd -d laser laser
 
+COPY bashrc           /root/.bashrc
 COPY php.ini          /etc/php8/conf.d/laser.ini
 COPY nginx-site.conf  /etc/nginx/conf.d/
 COPY supervisord.conf /etc/supervisord.conf
