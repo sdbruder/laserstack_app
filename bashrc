@@ -1,5 +1,7 @@
 source /etc/profile
 
+export PATH=~/.composer/vendor/bin/:$PATH
+
 echo "[client]" >  ~/.my.cnf
 echo "host=db"  >> ~/.my.cnf
 [ -n "$MYSQL_USER" ]     && echo "user=${MYSQL_USER}"         >> ~/.my.cnf
