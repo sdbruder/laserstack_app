@@ -5,12 +5,11 @@ if [ -f .env ]; then
     export $(echo $(cat .env | sed 's/#.*//g'| xargs) | envsubst)
 fi
 
-echo $HUB_PASSWORD | docker login -u $HUB_USER --password-stdin
+base_dir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 
-docker build --no-cache -t laserstack/app:$APP_VERSION .
-docker push                laserstack/app:$APP_VERSION
-
-if [ $APP_LATEST -eq 1 ] ; then
-    docker build -t laserstack/app:latest .
-    docker push     laserstack/app:latest
-fi
+for version in $(ls -r -d */ | cut -f1 -d'/' | xargs) ; do
+    cd $base_dir/$version
+    echo "$version ----------------------------"
+    docker build -t laserstack/app:$version .
+    docker push     laserstack/app:$version
+done
