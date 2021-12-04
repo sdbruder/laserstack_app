@@ -29,7 +29,7 @@ RUN \
 RUN \
 	echo "source /etc/profile" > ~/.bashrc \
 	&& chmod a+x ~/.bashrc \
-	&& mv /etc/profile.d/color_prompt /etc/profile.d/color_prompt.sh \
+	&& mv /etc/profile.d/color_prompt.sh.disabled /etc/profile.d/color_prompt.sh \
 	&& echo laser > /etc/hostname \
 	&& addgroup laser \
 	&& adduser -D -s /bin/bash -h /var/www -G laser laser \
