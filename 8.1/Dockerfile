@@ -8,13 +8,14 @@ RUN \
 	apk update \
 	&& apk upgrade \
 	&& apk add \
-		bash sudo vim less curl git supervisor yarn \
-		nginx npm nodejs mysql-client gnu-libiconv \
-		php81 php81-fpm php81-phar php81-fileinfo php81-tokenizer php81-dom \
-		php81-simplexml php81-xml php81-xmlreader php81-xmlwriter php81-pdo_mysql \
 		php81-mbstring php81-opcache php81-iconv php81-intl php81-gd php81-session \
+		php81-simplexml php81-xml php81-xmlreader php81-xmlwriter php81-pdo_mysql \
+		php81 php81-fpm php81-phar php81-fileinfo php81-tokenizer php81-dom \
+		php81-pecl-amqp php81-pcntl php81-xsl php81-sodium php81-pdo_pgsql \
+		bash sudo vim less curl git supervisor yarn curl nginx npm nodejs \
 		php81-pecl-redis php81-mysqli php81-mysqlnd php81-pecl-xdebug \
-		php81-curl curl libcurl php81-ctype php81-zip \
+		php81-curl curl libcurl php81-ctype php81-zip php81-json \
+		mysql-client gnu-libiconv \
 	&& ln -s /usr/bin/php81 /usr/local/bin/php \
 	&& rm -f /etc/nginx/conf.d/*
 
