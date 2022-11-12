@@ -14,7 +14,7 @@ RUN \
 		php81-simplexml php81-xml php81-xmlreader php81-xmlwriter php81-pdo_mysql \
 		php81-mbstring php81-opcache php81-iconv php81-intl php81-gd php81-session \
 		php81-pecl-redis php81-mysqli php81-mysqlnd php81-pecl-xdebug \
-		php81-curl curl libcurl php8-ctype php8-zip \
+		php81-curl curl libcurl php81-ctype php81-zip \
 	&& ln -s /usr/bin/php81 /usr/local/bin/php \
 	&& rm -f /etc/nginx/conf.d/*
 
