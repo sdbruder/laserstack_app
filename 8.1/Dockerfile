@@ -15,7 +15,7 @@ RUN \
 		bash sudo vim less curl git supervisor yarn curl nginx npm nodejs \
 		php81-pecl-redis php81-mysqli php81-mysqlnd php81-pecl-xdebug \
 		php81-curl curl libcurl php81-ctype php81-zip php81-json \
-		mysql-client gnu-libiconv \
+		php81-pdo_sqlite mysql-client gnu-libiconv \
 	&& ln -s /usr/bin/php81 /usr/local/bin/php \
 	&& rm -f /etc/nginx/conf.d/*
 

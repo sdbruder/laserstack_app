@@ -20,5 +20,6 @@ for version in $(ls -r -d */ | cut -f1 -d'/' | xargs) ; do
     echo "$version ----------------------------"
     docker build --tag laserstack/app:$version $EXTRA .
 done
+
 docker push --all-tags laserstack/app
 

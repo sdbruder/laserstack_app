@@ -14,7 +14,7 @@ RUN \
 		php8-simplexml php8-xml php8-xmlreader php8-xmlwriter php8-pdo_mysql \
 		php8-mbstring php8-opcache php8-iconv php8-intl php8-gd php8-session \
 		php8-pecl-redis php8-mysqli php8-mysqlnd php8-pecl-xdebug \
-		php8-curl curl libcurl php8-ctype php8-zip \
+		php8-curl curl libcurl php8-ctype php8-zip php8-pdo_sqlite \
 	&& ln -s /usr/bin/php8 /usr/local/bin/php \
 	&& rm -f /etc/nginx/conf.d/*
 
