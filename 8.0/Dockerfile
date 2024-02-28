@@ -1,5 +1,6 @@
 FROM alpine:3.16
-
+#PHP php8
+ 
 LABEL maintainer="Sergio Bruder"
 
 WORKDIR /var/www/html

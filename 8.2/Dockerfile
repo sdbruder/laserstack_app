@@ -1,4 +1,5 @@
-FROM alpine:edge
+FROM alpine:3.19
+#PHP php82
 
 LABEL maintainer="Sergio Bruder"
 

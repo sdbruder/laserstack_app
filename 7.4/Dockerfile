@@ -1,4 +1,5 @@
 FROM alpine:3.15
+#PHP php7
 
 LABEL maintainer="Sergio Bruder"
 
