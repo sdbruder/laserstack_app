@@ -10,9 +10,7 @@ fi
 base_dir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 
 docker login --username "$HUB_USER" --password "$HUB_PASSWORD"
-docker buildx rm laserbuilder
 docker buildx create --name laserbuilder --use --bootstrap
-
 for version in $(ls -r -d */ | cut -f1 -d'/' | xargs); do
   if [ "$APP_LATEST" == "$version" ]; then
     EXTRA="--tag laserstack/app:latest"
