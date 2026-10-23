@@ -1,0 +1,39 @@
+name: nightly publish
+
+on:
+  schedule:
+    # every night, 01:00 UTC
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    env:
+      # same names the build script reads from .env
+      HUB_USER: ${{ secrets.HUB_USER }}
+      HUB_PASSWORD: ${{ secrets.HUB_PASSWORD }}
+      BUILDX_CACHE: gha
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: check the docker hub secrets
+        run: |
+          if [ -z "${HUB_USER}" ] || [ -z "${HUB_PASSWORD}" ]; then
+            echo "::error::add the repository secrets HUB_USER and HUB_PASSWORD (Docker Hub user name and access token)"
+            exit 1
+          fi
+
+      - name: set up qemu
+        uses: docker/setup-qemu-action@v3
+
+      - name: build and publish every image
+        run: ./buildx.sh

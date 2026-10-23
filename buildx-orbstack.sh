@@ -23,7 +23,7 @@ for version in $(ls -r -d */ | cut -f1 -d'/' | grep -v common | xargs); do
 
   ALPINE=$(grep FROM Dockerfile | awk '{ print $2;}')
   PHP=$(grep PHP Dockerfile | awk '{ print $2;}')
-  PHPVERSION=$(docker run -it --rm $ALPINE /bin/ash -c "apk add $PHP ; $PHP --version" | grep ^PHP | awk '{print $2}')
+  PHPVERSION=$(docker run --rm $ALPINE /bin/ash -c "apk add $PHP ; $PHP --version" | grep ^PHP | awk '{print $2}')
   EXTRA="--tag laserstack/app:$PHPVERSION $EXTRA"
 
   docker \

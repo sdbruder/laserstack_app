@@ -25,6 +25,26 @@ is the version `composer global require` resolved for that PHP series.
 `laserstack/app:<major.minor>`, and gives the `APP_LATEST` directory the
 `latest` tag.
 
+## Publishing
+
+`buildx.sh` builds every directory for `linux/amd64` and `linux/arm64`, pushes
+`laserstack/app:<major.minor>` and `laserstack/app:<php-version>`, and gives
+`latest` to the newest directory (or to `APP_LATEST`, when set). It reads
+`HUB_USER` and `HUB_PASSWORD` from the environment or from `.env`.
+
+`BUILDX_CACHE=gha` turns on the GitHub Actions build cache. A failed cache
+does not block the build; the script retries without it.
+
+`.github/workflows/nightly-publish.yml` runs the same script every night at
+01:00 UTC, and on demand from the Actions tab. It needs two repository
+secrets:
+
+| Secret         | Value                                            |
+| -------------- | ------------------------------------------------ |
+| `HUB_USER`     | Docker Hub user name                             |
+| `HUB_PASSWORD` | Docker Hub access token with read and write access |
+
+
 ## License
 
  Laser Stack (and this container image) is open-sourced software licensed under [BSD license](LICENSE.md).
