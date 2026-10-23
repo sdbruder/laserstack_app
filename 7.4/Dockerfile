@@ -17,7 +17,7 @@ RUN \
   php7-pecl-redis php7-mysqli php7-mysqlnd php7-pecl-xdebug \
   php7-curl curl libcurl php7-ctype php7-zip php7-pdo_sqlite \
   && ln -s /usr/bin/php7 /usr/local/bin/php \
-  && rm -f /etc/nginx/conf.d/*
+  && rm -f /etc/nginx/http.d/*
 
 RUN \
   curl -sS --location --output /usr/local/bin/phpunit "https://phar.phpunit.de/phpunit.phar" \
@@ -38,7 +38,7 @@ RUN \
 
 COPY bashrc           /root/.bashrc
 COPY php.ini          /etc/php7/conf.d/laser.ini
-COPY nginx-site.conf  /etc/nginx/conf.d/
+COPY nginx-site.conf  /etc/nginx/http.d/
 COPY supervisord.conf /etc/supervisord.conf
 
 ENV LD_PRELOAD=/usr/lib/preloadable_libiconv.so

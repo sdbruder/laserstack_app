@@ -1,4 +1,4 @@
-FROM alpine:3.19
+FROM alpine:3.24
 #PHP php83
 
 LABEL maintainer="Sergio Bruder"
@@ -6,9 +6,7 @@ LABEL maintainer="Sergio Bruder"
 WORKDIR /var/www/html
 
 RUN \
-  echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
-  && cat /etc/apk/repositories \
-  && apk update \
+  apk update \
   && apk upgrade \
   && apk add \
   php83-mbstring php83-opcache php83-iconv php83-intl php83-gd php83-session \
@@ -20,7 +18,7 @@ RUN \
   php83-curl curl libcurl php83-ctype php83-zip php83-json \
   php83-pdo_sqlite mysql-client gnu-libiconv \
   && ln -s /usr/bin/php83 /usr/local/bin/php \
-  && rm -f /etc/nginx/conf.d/*
+  && rm -f /etc/nginx/http.d/*
 
 RUN \
   curl -sS --location --output /usr/local/bin/phpunit "https://phar.phpunit.de/phpunit.phar" \
@@ -41,7 +39,7 @@ RUN \
 
 COPY bashrc           /root/.bashrc
 COPY php.ini          /etc/php83/conf.d/laser.ini
-COPY nginx-site.conf  /etc/nginx/conf.d/
+COPY nginx-site.conf  /etc/nginx/http.d/
 COPY supervisord.conf /etc/supervisord.conf
 
 ENV LD_PRELOAD=/usr/lib/preloadable_libiconv.so

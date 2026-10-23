@@ -18,7 +18,7 @@ RUN \
   php81-curl curl libcurl php81-ctype php81-zip php81-json \
   php81-pdo_sqlite mysql-client gnu-libiconv \
   && ln -s /usr/bin/php81 /usr/local/bin/php \
-  && rm -f /etc/nginx/conf.d/*
+  && rm -f /etc/nginx/http.d/*
 
 RUN \
   curl -sS --location --output /usr/local/bin/phpunit "https://phar.phpunit.de/phpunit.phar" \
@@ -39,7 +39,7 @@ RUN \
 
 COPY bashrc           /root/.bashrc
 COPY php.ini          /etc/php81/conf.d/laser.ini
-COPY nginx-site.conf  /etc/nginx/conf.d/
+COPY nginx-site.conf  /etc/nginx/http.d/
 COPY supervisord.conf /etc/supervisord.conf
 
 ENV LD_PRELOAD=/usr/lib/preloadable_libiconv.so
