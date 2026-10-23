@@ -20,12 +20,11 @@ RUN \
   && rm -f /etc/nginx/http.d/*
 
 RUN \
-  curl -sS --location --output /usr/local/bin/phpunit "https://phar.phpunit.de/phpunit.phar" \
-  && chmod +x /usr/local/bin/phpunit \
-  && curl -sS --location --output /tmp/composer-setup.php "https://getcomposer.org/installer" \
+  curl -sS --location --output /tmp/composer-setup.php "https://getcomposer.org/installer" \
   && php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer --quiet \
   && rm /tmp/composer-setup.php \
-  && /usr/local/bin/composer global require phpunit/phpunit
+  && /usr/local/bin/composer global require phpunit/phpunit \
+  && ln -s /root/.composer/vendor/bin/phpunit /usr/local/bin/phpunit
 
 RUN \
   echo "source /etc/profile" > ~/.bashrc \
