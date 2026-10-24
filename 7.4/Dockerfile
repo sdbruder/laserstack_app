@@ -15,7 +15,7 @@ RUN \
   php7-simplexml php7-xml php7-xmlreader php7-xmlwriter php7-pdo_mysql \
   php7-mbstring php7-opcache php7-iconv php7-intl php7-gd php7-session \
   php7-pecl-redis php7-mysqli php7-mysqlnd php7-pecl-xdebug \
-  php7-curl curl libcurl php7-ctype php7-zip php7-pdo_sqlite \
+  php7-curl curl libcurl php7-ctype php7-zip php7-pdo_sqlite php7-pdo_pgsql \
   && ln -s /usr/bin/php7 /usr/local/bin/php \
   && rm -f /etc/nginx/http.d/*
 
