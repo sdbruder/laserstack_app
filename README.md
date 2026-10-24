@@ -16,6 +16,17 @@ series and runs on the newest Alpine release that still packages that series.
 | `8.3`     | 3.24   | 8.3.36 | bug and security fixes            |
 | `8.4`     | 3.24   | 8.4.27 | bug and security fixes            |
 | `8.5`     | 3.24   | 8.5.12 | current stable                    |
+| `8.6`     | edge   | 8.6.x  | unreleased, at RC                 |
+
+The `8.6` directory is ready, but PHP 8.6 has no stable release yet (release
+candidate only, GA planned for 19 November 2026), and no Alpine branch packages
+`php86`, not even `edge`. The directory therefore sits in `.buildx-skip` and the
+build scripts ignore it. Delete its line from `.buildx-skip` when Alpine ships
+`php86`; the scripts then build it with no further change.
+
+`.buildx-skip` holds one version directory per line. Blank lines and lines that
+are not `major.minor` are ignored. While `8.6` is listed, `latest` stays on the
+newest directory that builds, that is `8.5`.
 
 Each image runs nginx (vhosts from `nginx-site.conf` on port 80) and php-fpm
 under supervisord. Xdebug is loaded with `xdebug.mode=profile`, and `phpunit`

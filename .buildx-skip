@@ -1,0 +1,3 @@
+# version directories the build must not touch, one per line
+# 8.6 needs php86, which Alpine packages in edge only once PHP 8.6 is released
+8.6
