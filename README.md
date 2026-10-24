@@ -30,7 +30,10 @@ newest directory that builds, that is `8.5`.
 
 Each image runs nginx (vhosts from `nginx-site.conf` on port 80) and php-fpm
 under supervisord. Xdebug is loaded with `xdebug.mode=profile`, and `phpunit`
-is the version `composer global require` resolved for that PHP series.
+is the version `composer global require` resolved for that PHP series. The
+mysql client and the postgres client (`psql`, `pg_dump`) are installed, for
+`laser mysql` and `laser psql` of
+[laserstack](https://github.com/sdbruder/laserstack).
 
 `buildx-orbstack.sh` tags each image `laserstack/app:<php-version>` and
 `laserstack/app:<major.minor>`, and gives the `APP_LATEST` directory the

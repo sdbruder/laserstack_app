@@ -16,7 +16,7 @@ RUN \
   bash sudo vim less curl git supervisor yarn curl nginx npm nodejs \
   php82-pecl-redis php82-mysqli php82-mysqlnd php82-pecl-xdebug \
   php82-curl curl libcurl php82-ctype php82-zip php82-json \
-  php82-pdo_sqlite mysql-client gnu-libiconv \
+  php82-pdo_sqlite mysql-client postgresql-client gnu-libiconv \
   && ln -s /usr/bin/php82 /usr/local/bin/php \
   && rm -f /etc/nginx/http.d/*
 

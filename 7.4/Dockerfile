@@ -10,7 +10,7 @@ RUN \
   && apk --no-cache upgrade \
   && apk --no-cache add \
   bash sudo vim less curl git supervisor yarn \
-  nginx npm nodejs mysql-client gnu-libiconv \
+  nginx npm nodejs mysql-client postgresql-client gnu-libiconv \
   php7 php7-fpm php7-phar php7-fileinfo php7-tokenizer php7-dom \
   php7-simplexml php7-xml php7-xmlreader php7-xmlwriter php7-pdo_mysql \
   php7-mbstring php7-opcache php7-iconv php7-intl php7-gd php7-session \

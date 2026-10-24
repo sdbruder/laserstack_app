@@ -16,7 +16,7 @@ RUN \
   bash sudo vim less curl git supervisor yarn curl nginx npm nodejs \
   php84-pecl-redis php84-mysqli php84-mysqlnd php84-pecl-xdebug \
   php84-curl curl libcurl php84-ctype php84-zip php84-json \
-  php84-pdo_sqlite mysql-client gnu-libiconv \
+  php84-pdo_sqlite mysql-client postgresql-client gnu-libiconv \
   && ln -s /usr/bin/php84 /usr/local/bin/php \
   && rm -f /etc/nginx/http.d/*
 
