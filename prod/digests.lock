@@ -1,0 +1,6 @@
+# base image of the production overlay, written by prod/build.sh --update
+# commit this file: it is what makes a rebuild reproducible
+php_series=8.5
+base_image=laserstack/app:8.5
+base_digest=sha256:726f0d3d211f52aaccda2486719ba18ca6951ea2bde2bafc885b12dc3e1525bf
+resolved_at=2026-10-24T21:01:42Z

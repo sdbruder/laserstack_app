@@ -18,7 +18,7 @@ container. The defaults are not.
 | -- | ------- | -------- | ----------------- |
 | 1  | The vhost only matches `*.test` host names | `nginx-site.conf`: `server_name "~^([^.]*\.){0,}(?P<project>[^.]+)\.test$"; root /var/www/$project/public;`. Smoke test: `Host: myapp.test` returns the app, `Host: app.example.com` returns `404 File not found.` | The real domain does not route. You must replace `/etc/nginx/http.d/nginx-site.conf`. |
 | 2  | The document root comes from the request | Same directive: `root /var/www/$project/public` | A wrong or forged `Host` selects a different directory tree. Set a fixed root. |
-| 3  | Xdebug runs in profile mode | `/etc/php85/conf.d/laser.ini`: `xdebug.mode=profile`, `xdebug.start_with_request=trigger`; `php -m` lists xdebug | Any client that sends the trigger (`?XDEBUG_TRIGGER`, session cookie) makes the app write cachegrind files and slow down. Set `xdebug.mode=off`. |
+| 3  | Xdebug runs in profile mode | `/etc/php85/conf.d/laser.ini`: `xdebug.mode=profile`, `xdebug.start_with_request=trigger`; `php -m` lists xdebug | Any client that sends the trigger (`?XDEBUG_TRIGGER`, session cookie) makes the app write cachegrind files and slow down. The overlay removes the extension and comments its loader lines. |
 | 4  | The container runs as root | `Config.User` is empty; `id` in the container is `uid=0(root)`. User `laser` has an empty password (`/etc/shadow`: `laser::20750:...`) and a login shell; `sudo` is installed | An application compromise is a root compromise. Run the image with a non-root user. |
 | 5  | No health check | `Config.Healthcheck` is `<nil>` | The orchestrator cannot tell when the app is ready. Add your own probe. |
 | 6  | Tags move | `buildx.sh` pushes `laserstack/app:<major.minor>` and `latest`; `nightly-publish.yml` rebuilds at 01:00 UTC daily. Hub shows `7.4` pushed `2026-10-24T20:02` | A deploy of `8.5` today and tomorrow is not the same image. Pin `laserstack/app:8.5.12@sha256:<digest>`. Never use `latest`. |
@@ -42,10 +42,12 @@ image holds no application code, so you layer or mount the app at
 
 ## Minimum changes for one production app
 
-1. Pin the digest: `FROM laserstack/app:8.5.12@sha256:<digest>`.
+1. Pin the digest: `FROM laserstack/app:8.5@sha256:<digest>`, and take the digest
+   from a lock file. `prod/build.sh --update` writes it, `--check` reports a
+   moved base tag.
 2. Replace the vhost with a fixed root and a fixed `server_name`: take the set in
    `examples/nginx`, see the section below.
-3. Write `xdebug.mode=off` and `expose_php=Off` into a `conf.d` file.
+3. Remove Xdebug, and write `expose_php=Off` into a `conf.d` file.
 4. Run as a non-root user, or keep the root container but keep the app code on a
    read-only mount owned by `nobody`.
 5. Raise `pm.max_children` to the size of the host. The nginx logs already go to
@@ -54,17 +56,113 @@ image holds no application code, so you layer or mount the app at
 7. Remove the development toolchain when you can, to shrink the CVE feed.
 8. Scan and sign the result in CI, and keep the pinned base digest under review.
 
+## prod overlay
+
+`prod/` builds one production image for one app on top of a pinned base, and
+applies the eight items of the list above.
+
+| File | What it does |
+| ---- | ------------ |
+| `Dockerfile` | the overlay: pinned base, unprivileged user, no toolchain, no Xdebug, production nginx, php, php-fpm and supervisord configurations |
+| `build.sh` | resolves the base digest, writes `digests.lock`, builds from the pin; optional `--push`, `--scan` and `--sign` |
+| `digests.lock` | the pinned base digest: the file that makes a rebuild reproducible |
+| `php/zz-prod.ini` | `expose_php = Off` |
+| `php/zz-prod-fpm.conf` | `pm.max_children`, the pool user `app`, and the pid file and error log of a non-root process |
+| `supervisord.conf` | supervisord without root: socket, pid file and logs under `/tmp` and on the container streams |
+
+Usage:
+
+```
+./prod/build.sh --update                      # resolve laserstack/app:8.5, write the lock
+APP_DOMAIN=app.example.com ./prod/build.sh    # build laserstack/app-prod:8.5
+./prod/build.sh --check                       # exit 1 when the base tag moved
+```
+
+Behind a balancer that terminates TLS:
+
+```
+TRUST_FORWARDED_PROTO=1 TRUSTED_PROXY=10.0.0.0/8 \
+APP_DOMAIN=app.example.com ./prod/build.sh
+```
+
+`--push` builds `linux/amd64` and `linux/arm64` and pushes. `--scan` runs trivy,
+or grype, and fails on HIGH and CRITICAL. `--sign` runs cosign, and needs
+`--push`. Both fail when the tool is not in `PATH`.
+
+| Variable | Default | Meaning |
+| -------- | ------- | ------- |
+| `PHP_SERIES` | `8.5` | base series, must match the lock |
+| `APP_DOMAIN` | required | the `server_name` of the app |
+| `IMAGE` / `TAG` | `laserstack/app-prod` / `$PHP_SERIES` | the image to build |
+| `TRUST_FORWARDED_PROTO` | `0` | `1` takes the scheme from `X-Forwarded-Proto` |
+| `TRUSTED_PROXY` | `10.0.0.0/8` | the balancer range, used with `TRUST_FORWARDED_PROTO=1` |
+| `PHP_MAX_CHILDREN` | `16` | php-fpm `pm.max_children`, at least 8 |
+| `HEALTH_PATH` | `/` | the path of the health check, also settable at run time |
+
+Run it:
+
+```
+docker run --init -p 8080:8080 \
+  -v /srv/app:/var/www/app:ro \
+  -v app-storage:/var/www/app/storage \
+  laserstack/app-prod:8.5
+```
+
+- The container user is `app`, uid 10001. supervisord, nginx and php-fpm all run
+  as that user, and the app listens on 8080.
+- `--init`: supervisord is PID 1, and it reaps only its own children.
+- The app is read-only at `/var/www/app` and must be readable by uid 10001. The
+  directories the app writes to (cache, sessions, storage) need uid 10001
+  ownership: a named volume that you chown once, as in the example above.
+- The health check requests `http://127.0.0.1:8080$HEALTH_PATH`, through nginx
+  and php-fpm. Set `HEALTH_PATH` at run time for a different path.
+
+### Verified
+
+Built both shapes from `laserstack/app:8.5@sha256:726f0d3d…` and ran them with a
+read-only application mount.
+
+| Check | Result |
+| ----- | ------ |
+| `docker exec … id` | `uid=10001(app)`, and supervisord, nginx and php-fpm all run as `app` |
+| health status | `healthy`, exit code 0 |
+| `nginx -t` in the image | successful, no alert: `-e /dev/stderr` covers the compiled-in default log |
+| `GET /` | `200`, the application, with `Server: nginx` and no `X-Powered-By` |
+| `GET /.env` | `403`, and `/.well-known/security.txt` `200` |
+| static asset | `Cache-Control: max-age=2592000`, with the server headers inherited |
+| 2 MiB upload | `200`, `{"bytes":2097364}` |
+| `php -m` | no xdebug; `expose_php => Off` |
+| php-fpm | workers in the `www` pool, `pm.max_children = 16`, `error_log = /dev/stderr`, `pid = /tmp/php-fpm.pid` |
+| toolchain | no `git`, `sudo`, `vim`, `node`, `npm`, `yarn`, `composer`, `phpunit`; `psql`, `mysql`, `curl`, `bash` stay |
+| supervisord log | one line per event on the container stream, no duplicated output |
+| image metadata | `User=app`, `Expose 8080` (80 stays from the base image), base name and digest labels set |
+| `/tmp` after start | only the runtime files: nginx temp directories and pid, php-fpm pid, supervisord pid and socket |
+| balancer shape | `X-Forwarded-Proto: https` gives `{"https":"on"}`, and `{"https":""}` without it; `X-Forwarded-For: 203.0.113.9, 10.1.2.3` from a trusted peer gives `{"remote":"10.1.2.3"}` |
+| wrong digest | `docker buildx build --build-arg BASE_IMAGE=laserstack/app:8.5@sha256:0000…` fails with `not found`; without `BASE_IMAGE` it fails with `base name should not be blank` |
+| `--check` | reports the base tag as still pinned, exit 0 |
+
+Two notes from the run:
+
+- `php-fpm` logs `NOTICE: [pool www] 'user' directive is ignored when FPM is not
+  running as root`. The workers run as `app` either way, and the directive
+  matters when someone starts the image as root.
+- BuildKit warns `InvalidDefaultArgInFrom` for `BASE_IMAGE`. It has no default on
+  purpose, so a build without a pin fails instead of pulling a moving tag.
+
 ## nginx examples
 
 `examples/nginx/` holds a production set for one app. Every file was loaded into
-`laserstack/app:8.5` and exercised; the results are in "Verified" below.
+`laserstack/app:8.5` and exercised; the results are in "Verified" below. The
+vhosts listen on 8080, and on 8443 for TLS: a non-root user cannot bind a port
+below 1024.
 
 | File | Purpose |
 | ---- | ------- |
-| `nginx.conf` | Main config. Logs to the container streams, `client_max_body_size 100M` to match php.ini, gzip, 4096 connections, TLS 1.2 and 1.3 only. |
-| `http.d/00-single-app.conf` | One fixed domain, one fixed document root, dotfile deny, static caching, PHP handler. Start here. |
+| `nginx.conf` | Main config. Logs to the container streams, `client_max_body_size 100M` to match php.ini, gzip, 4096 connections, TLS 1.2 and 1.3 only, and pid and temp files under `/tmp` for a non-root run. |
+| `http.d/00-single-app.conf` | One fixed domain, then the shared body. Start here. |
 | `http.d/10-behind-proxy.conf` | The load balancer terminates TLS. Client address from `X-Forwarded-For` within a trusted range, scheme from `X-Forwarded-Proto`. |
-| `http.d/20-direct-tls.conf.disabled` | nginx terminates TLS on 443, HSTS, ACME challenge, port 80 redirect. Mount the certificates, then rename the file to `20-direct-tls.conf`: the include pattern is `http.d/*.conf`. |
+| `http.d/20-direct-tls.conf.disabled` | nginx terminates TLS on 8443, HSTS, ACME challenge, and a redirect from 8080. Mount the certificates, then rename the file to `20-direct-tls.conf`: the include pattern is `http.d/*.conf`. |
+| `snippets/server-body.conf` | The body of an application server block: fixed root, dotfile deny, static cache, PHP handler. Every vhost includes it. |
 | `snippets/security-headers.conf` | `nosniff`, `SAMEORIGIN`, referrer and permissions policy, on error responses too. |
 | `snippets/static-assets.conf` | 30-day cache for the static extensions. Holds no `add_header` on purpose. |
 | `snippets/php-fpm.conf` | The `~ \.php$` handler for `127.0.0.1:9000`, with `try_files $uri =404` and the `HTTPS` parameter from `$app_https`. |
@@ -81,7 +179,7 @@ Mount them for a test run. The `http.d` mount replaces the shipped
 `nginx-site.conf`:
 
 ```
-docker run -p 8080:80 \
+docker run -p 8080:8080 \
   -v "$PWD/examples/nginx/nginx.conf:/etc/nginx/nginx.conf:ro" \
   -v "$PWD/examples/nginx/http.d:/etc/nginx/http.d:ro" \
   -v "$PWD/examples/nginx/snippets:/etc/nginx/snippets:ro" \
@@ -105,6 +203,7 @@ docker run -p 8080:80 \
 | 2 MiB upload | `200`, `{"bytes":2097364}` |
 | `https://app-tls.example.com/` | HTTP/2 `200` with `strict-transport-security` |
 | `http://app-tls.example.com/a/b?c=d` | `301 https://app-tls.example.com/a/b?c=d` |
+| `/.well-known/acme-challenge/…` over plain HTTP | `200`: the dotfile rule does not block the challenge |
 | access log | lines appear in `docker logs` |
 
 ### Notes
