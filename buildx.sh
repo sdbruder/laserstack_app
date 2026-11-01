@@ -48,9 +48,16 @@ for version in $versions; do
   cd $base_dir/$version
   echo "$version ----------------------------"
 
-  ALPINE=$(grep FROM Dockerfile | awk '{ print $2;}')
-  PHP=$(grep PHP Dockerfile | awk '{ print $2;}')
-  PHPVERSION=$(docker run --rm $ALPINE /bin/ash -c "apk add $PHP ; $PHP --version" | grep ^PHP | awk '{print $2}')
+  # the markers must match the start of a line: comments and ARG lines in the
+  # Dockerfile mention the same names
+  ALPINE=$(grep -m1 '^FROM ' Dockerfile | awk '{ print $2;}')
+  PHP=$(grep -m1 '^#PHP ' Dockerfile | awk '{ print $2;}')
+  # a series that lives outside main and community names its repository in an
+  # ARG PHP_REPO line, so the resolution below installs the same package
+  PHP_REPO="$(grep -m1 '^ARG PHP_REPO=' Dockerfile | cut -d'"' -f2)"
+  repo_arg=""
+  [ -n "$PHP_REPO" ] && repo_arg="--repository=$PHP_REPO"
+  PHPVERSION=$(docker run --rm $ALPINE /bin/ash -c "apk add $repo_arg $PHP; $PHP --version" | grep ^PHP | awk '{print $2}')
   EXTRA="--tag laserstack/app:$PHPVERSION $EXTRA"
 
   if [ "$CACHE_ARGS" == "gha" ]; then

@@ -5,7 +5,9 @@ This is the app container image for [Laserstack](https://github.com/sdbruder/las
 ## Images
 
 Each directory builds one image. An image carries the newest PHP patch of its
-series and runs on the newest Alpine release that still packages that series.
+series and runs on the newest Alpine release that still packages that series;
+a series that no released branch carries yet runs on `edge`, and takes its
+package from the repository that has it.
 
 | Directory | Alpine | PHP    | Series status                     |
 | --------- | ------ | ------ | --------------------------------- |
@@ -16,17 +18,22 @@ series and runs on the newest Alpine release that still packages that series.
 | `8.3`     | 3.24   | 8.3.36 | bug and security fixes            |
 | `8.4`     | 3.24   | 8.4.27 | bug and security fixes            |
 | `8.5`     | 3.24   | 8.5.12 | current stable                    |
-| `8.6`     | edge   | 8.6.x  | unreleased, at RC                 |
+| `8.6`     | edge   | 8.6.0RC4 | release candidate, not `latest` |
 
-The `8.6` directory is ready, but PHP 8.6 has no stable release yet (release
-candidate only, GA planned for 19 November 2026), and no Alpine branch packages
-`php86`, not even `edge`. The directory therefore sits in `.buildx-skip` and the
-build scripts ignore it. Delete its line from `.buildx-skip` when Alpine ships
-`php86`; the scripts then build it with no further change.
+The `8.6` directory builds: Alpine carries `php86` in the `edge/testing`
+repository, and the Dockerfile installs the series from there. PHP 8.6 has no
+stable release yet (GA is planned for 19 November 2026), so the image is a
+release candidate, and `latest` stays on `8.5` because
+`.github/workflows/nightly-publish.yml` sets `APP_LATEST=8.5`. When Alpine moves
+`php86` to `edge/community`, delete the `ARG PHP_REPO` line from
+`8.6/Dockerfile`; nothing else changes.
+
+A directory whose series lives outside `main` and `community` names its
+repository in an `ARG PHP_REPO` line. `buildx.sh` reads that value, so the
+version resolution installs the series the same way the Dockerfile does.
 
 `.buildx-skip` holds one version directory per line. Blank lines and lines that
-are not `major.minor` are ignored. While `8.6` is listed, `latest` stays on the
-newest directory that builds, that is `8.5`.
+are not `major.minor` are ignored. It is empty at the moment.
 
 Each image runs nginx (vhosts from `nginx-site.conf` on port 80) and php-fpm
 under supervisord. Xdebug is loaded with `xdebug.mode=profile`, and `phpunit`
@@ -43,7 +50,8 @@ mysql client and the postgres client (`psql`, `pg_dump`) are installed, for
 
 `buildx.sh` builds every directory for `linux/amd64` and `linux/arm64`, pushes
 `laserstack/app:<major.minor>` and `laserstack/app:<php-version>`, and gives
-`latest` to the newest directory (or to `APP_LATEST`, when set). It reads
+`latest` to the newest directory (or to `APP_LATEST`, when set; the workflow
+sets it to `8.5`, so a release candidate cannot take `latest`). It reads
 `HUB_USER` and `HUB_PASSWORD` from the environment or from `.env`.
 
 `BUILDX_CACHE=gha` turns on the GitHub Actions build cache. A failed cache

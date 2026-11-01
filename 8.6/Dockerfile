@@ -1,6 +1,11 @@
-# php86 is packaged in edge only, no released Alpine branch carries it yet
+# php86 is in edge/testing only. It moves to edge/community when PHP 8.6 is
+# released, and this image then loses the testing repository.
 FROM alpine:edge
 #PHP php86
+
+# the testing repository carries php86; buildx.sh reads this value to resolve
+# the patch version
+ARG PHP_REPO="https://dl-cdn.alpinelinux.org/alpine/edge/testing"
 
 LABEL maintainer="Sergio Bruder"
 
@@ -10,7 +15,7 @@ WORKDIR /var/www/html
 RUN \
   apk update \
   && apk upgrade \
-  && apk add \
+  && apk add --repository="$PHP_REPO" \
   php86-mbstring php86-iconv php86-intl php86-gd php86-session \
   php86-simplexml php86-xml php86-xmlreader php86-xmlwriter php86-pdo_mysql \
   php86 php86-fpm php86-phar php86-fileinfo php86-tokenizer php86-dom \
@@ -20,7 +25,8 @@ RUN \
   php86-curl curl libcurl php86-ctype php86-zip \
   php86-pdo_sqlite mysql-client postgresql-client gnu-libiconv \
   && ln -s /usr/bin/php86 /usr/local/bin/php \
-  && rm -f /etc/nginx/http.d/*
+  && rm -f /etc/nginx/http.d/* \
+  && echo "$PHP_REPO" >> /etc/apk/repositories
 
 RUN \
   curl -sS --location --output /tmp/composer-setup.php "https://getcomposer.org/installer" \
