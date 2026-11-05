@@ -18,7 +18,7 @@ package from the repository that has it.
 | `8.3`     | 3.24   | 8.3.36 | bug and security fixes            |
 | `8.4`     | 3.24   | 8.4.27 | bug and security fixes            |
 | `8.5`     | 3.24   | 8.5.12 | current stable                    |
-| `8.6`     | edge   | 8.6.0RC4 | release candidate, not `latest` |
+| `8.6`     | edge   | 8.6.0RC5 | release candidate, not `latest` |
 
 The `8.6` directory builds: Alpine carries `php86` in the `edge/testing`
 repository, and the Dockerfile installs the series from there. PHP 8.6 has no
