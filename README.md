@@ -37,7 +37,10 @@ are not `major.minor` are ignored. It is empty at the moment.
 
 Each image runs nginx (vhosts from `nginx-site.conf` on port 80) and php-fpm
 under supervisord. Xdebug is loaded with `xdebug.mode=profile`, and `phpunit`
-is the version `composer global require` resolved for that PHP series. The
+is the version `composer global require` resolved for that PHP series. Every
+image from `7.4` to `8.5` carries the `memcached` extension, so a client can use
+the memcached profile of the stack as a cache store. `8.6` does not: Alpine has
+no package for it and pecl's `memcached` 3.4.0 does not compile against 8.6. The
 mysql client and the postgres client (`psql`, `pg_dump`) are installed, for
 `laser mysql` and `laser psql` of
 [laserstack](https://github.com/sdbruder/laserstack).
