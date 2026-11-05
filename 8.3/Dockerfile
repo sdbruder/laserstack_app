@@ -14,7 +14,7 @@ RUN \
   php83 php83-fpm php83-phar php83-fileinfo php83-tokenizer php83-dom \
   php83-pcntl php83-xsl php83-sodium php83-pdo_pgsql \
   bash sudo vim less curl git supervisor yarn curl nginx npm nodejs \
-  php83-pecl-redis php83-mysqli php83-mysqlnd php83-pecl-xdebug \
+  php83-pecl-redis php83-pecl-memcached php83-mysqli php83-mysqlnd php83-pecl-xdebug \
   php83-curl curl libcurl php83-ctype php83-zip php83-json \
   php83-pdo_sqlite mysql-client postgresql-client gnu-libiconv \
   && ln -s /usr/bin/php83 /usr/local/bin/php \

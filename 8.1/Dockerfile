@@ -14,7 +14,7 @@ RUN \
   php81 php81-fpm php81-phar php81-fileinfo php81-tokenizer php81-dom \
   php81-pecl-amqp php81-pcntl php81-xsl php81-sodium php81-pdo_pgsql \
   bash sudo vim less curl git supervisor yarn curl nginx npm nodejs \
-  php81-pecl-redis php81-mysqli php81-mysqlnd php81-pecl-xdebug \
+  php81-pecl-redis php81-pecl-memcached php81-mysqli php81-mysqlnd php81-pecl-xdebug \
   php81-curl curl libcurl php81-ctype php81-zip php81-json \
   php81-pdo_sqlite mysql-client postgresql-client gnu-libiconv \
   && ln -s /usr/bin/php81 /usr/local/bin/php \

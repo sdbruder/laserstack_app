@@ -14,7 +14,7 @@ RUN \
   php82 php82-fpm php82-phar php82-fileinfo php82-tokenizer php82-dom \
   php82-pcntl php82-xsl php82-sodium php82-pdo_pgsql \
   bash sudo vim less curl git supervisor yarn curl nginx npm nodejs \
-  php82-pecl-redis php82-mysqli php82-mysqlnd php82-pecl-xdebug \
+  php82-pecl-redis php82-pecl-memcached php82-mysqli php82-mysqlnd php82-pecl-xdebug \
   php82-curl curl libcurl php82-ctype php82-zip php82-json \
   php82-pdo_sqlite mysql-client postgresql-client gnu-libiconv \
   && ln -s /usr/bin/php82 /usr/local/bin/php \

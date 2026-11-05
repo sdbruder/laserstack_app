@@ -14,7 +14,7 @@ RUN \
   php84 php84-fpm php84-phar php84-fileinfo php84-tokenizer php84-dom \
   php84-pcntl php84-xsl php84-sodium php84-pdo_pgsql \
   bash sudo vim less curl git supervisor yarn curl nginx npm nodejs \
-  php84-pecl-redis php84-mysqli php84-mysqlnd php84-pecl-xdebug \
+  php84-pecl-redis php84-pecl-memcached php84-mysqli php84-mysqlnd php84-pecl-xdebug \
   php84-curl curl libcurl php84-ctype php84-zip php84-json \
   php84-pdo_sqlite mysql-client postgresql-client gnu-libiconv \
   && ln -s /usr/bin/php84 /usr/local/bin/php \

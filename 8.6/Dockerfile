@@ -28,6 +28,11 @@ RUN \
   && rm -f /etc/nginx/http.d/* \
   && echo "$PHP_REPO" >> /etc/apk/repositories
 
+# php86 is a release candidate and carries no memcached extension: pecl's
+# memcached 3.4.0 does not build against it (XtOffsetOf and zval_dtor are gone
+# from the API) and Alpine has no php86-pecl-memcached yet. The other series
+# get it from apk above; add php86-pecl-memcached to that list when it exists.
+
 RUN \
   curl -sS --location --output /tmp/composer-setup.php "https://getcomposer.org/installer" \
   && php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer --quiet \
