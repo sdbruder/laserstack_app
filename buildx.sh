@@ -53,8 +53,10 @@ for version in $versions; do
   ALPINE=$(grep -m1 '^FROM ' Dockerfile | awk '{ print $2;}')
   PHP=$(grep -m1 '^#PHP ' Dockerfile | awk '{ print $2;}')
   # a series that lives outside main and community names its repository in an
-  # ARG PHP_REPO line, so the resolution below installs the same package
-  PHP_REPO="$(grep -m1 '^ARG PHP_REPO=' Dockerfile | cut -d'"' -f2)"
+  # ARG PHP_REPO line, so the resolution below installs the same package. awk
+  # prints nothing and succeeds when a Dockerfile has no such line; grep exits 1
+  # and set -e ends the script before the second version, so do not use grep here.
+  PHP_REPO="$(awk -F\" '/^ARG PHP_REPO=/{print $2; exit}' Dockerfile)"
   repo_arg=""
   [ -n "$PHP_REPO" ] && repo_arg="--repository=$PHP_REPO"
   PHPVERSION=$(docker run --rm $ALPINE /bin/ash -c "apk add $repo_arg $PHP; $PHP --version" | grep ^PHP | awk '{print $2}')
