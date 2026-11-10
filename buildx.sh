@@ -38,7 +38,13 @@ case "${BUILDX_CACHE:-}" in
 esac
 
 docker login --username "$HUB_USER" --password "$HUB_PASSWORD"
+
+# A builder left behind by an earlier run, for example a run that a smoke test
+# stopped, would make the create below fail. Remove what is there, and remove
+# this run's builder on any exit, not only at the end of the loop.
+docker buildx rm laserbuilder >/dev/null 2>&1 || true
 docker buildx create --name laserbuilder --use --bootstrap
+trap 'docker buildx rm laserbuilder >/dev/null 2>&1 || true' EXIT
 for version in $versions; do
   if [ "$APP_LATEST" == "$version" ]; then
     EXTRA="--tag laserstack/app:latest"
@@ -139,4 +145,3 @@ for version in $versions; do
   # 5. The registry holds this content now; the local copy was for the test.
   docker image rm "$smoke" >/dev/null 2>&1 || true
 done
-docker buildx rm laserbuilder

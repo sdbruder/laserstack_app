@@ -80,6 +80,12 @@ The inventory now replaces the pull that used to happen after the push: nothing
 comes back from the registry anymore, and the record in the log and the summary
 belongs to the image that was tested.
 
+`buildx.sh` removes its builder on any exit now, through a trap, and removes a
+builder that an earlier run left behind before it creates one. A smoke failure
+stops the script before its last instruction, so without that trap the first
+good run would leave a builder and the next run would fail on `buildx create`
+instead of on the image.
+
 ### Versions of the published images at 2026-11-10
 
 | dir | php | composer | phpunit | node | npm | yarn | nginx | git | supervisor | apk |
