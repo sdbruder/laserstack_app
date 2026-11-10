@@ -89,5 +89,25 @@ for version in $versions; do
       exit 1
     fi
   fi
+
+  # The versions of the tools the image carries. The image writes them at build
+  # time into /etc/laserstack/versions.txt, so there is one list and not two
+  # that can disagree. The build pushed the image, so this pulls it back; a
+  # failure here must not fail the publish, the images are already up.
+  echo "$version tools ----------------------------"
+  if dump="$(docker run --pull always --rm --entrypoint cat "laserstack/app:$version" /etc/laserstack/versions.txt 2>/dev/null)"; then
+    printf '%s\n' "$dump"
+    # a table on the page of the run, when a workflow runs this script
+    if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+      {
+        printf '### laserstack/app:%s\n\n' "$version"
+        printf '| tool | version |\n| ---- | ------- |\n'
+        printf '%s\n' "$dump" | awk 'NF==2 {printf "| %s | %s |\n", $1, $2}'
+        printf '\n'
+      } >> "$GITHUB_STEP_SUMMARY"
+    fi
+  else
+    echo "$version: cannot read /etc/laserstack/versions.txt, the image predates the file" >&2
+  fi
 done
 docker buildx rm laserbuilder

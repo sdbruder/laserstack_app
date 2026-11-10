@@ -7,6 +7,20 @@
   // would turn a manual dispatch into a run that opens no branch. Add one if
   // the workflow is ever run more often than the cadence of the branches.
 
+  // Every Dockerfile of a series pins the composer of its image next to the
+  // install step. The value is the version of the packagist release, and one
+  // version serves every series: composer 2.x needs PHP 7.2.5 or newer.
+  customManagers: [
+    {
+      customType: "regex",
+      description: "the pinned composer of every image",
+      managerFilePatterns: ["/(^|/)[0-9]+\\.[0-9]+/Dockerfile$/"],
+      matchStrings: [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\nARG COMPOSER_VERSION=(?<currentValue>\\S+)",
+      ],
+    },
+  ],
+
   labels: ["dependencies"],
   prConcurrentLimit: 3,
 

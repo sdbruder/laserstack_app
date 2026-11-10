@@ -20,6 +20,14 @@ package from the repository that has it.
 | `8.5`     | 3.24   | 8.5.12 | current stable                    |
 | `8.6`     | edge   | 8.6.0RC5 | release candidate, not `latest` |
 
+The JavaScript toolchain — `node`, `npm` and `yarn` — comes from the Alpine
+release of the directory, as do `nginx`, `git` and `supervisor`. `7.4` and `8.0`
+therefore carry node 16, the same age as their PHP series. That is deliberate: a
+project that still needs PHP 7.4 or 8.0 is unlikely to run a newer node, and the
+alternative is a second apk repository in those two directories, for a version
+that matches no other part of the image. The versions an image really has are in
+its own `/etc/laserstack/versions.txt`.
+
 The `8.6` directory builds: Alpine carries `php86` in the `edge/testing`
 repository, and the Dockerfile installs the series from there. PHP 8.6 has no
 stable release yet (GA is planned for 19 November 2026), so the image is a
@@ -49,6 +57,30 @@ mysql client and the postgres client (`psql`, `pg_dump`) are installed, for
 `laserstack/app:<major.minor>`, and gives the `APP_LATEST` directory the
 `latest` tag.
 
+## What is inside an image
+
+Every image writes its own inventory at build time, so the answer to "which php,
+which composer, which node is in there" comes from the image and not from this
+file:
+
+```sh
+docker run --rm --entrypoint cat laserstack/app:8.5 /etc/laserstack/versions.txt
+docker run --rm --entrypoint cat laserstack/app:8.5 /etc/laserstack/packages.txt
+```
+
+`versions.txt` carries one tool per line: php, composer, phpunit, node, npm,
+yarn, nginx, git and supervisor. A tool that an image does not carry has no
+line, so the file of the production overlay is shorter than the file of the
+image it builds on. `packages.txt` is `apk info -v`, the whole apk inventory, at
+about 150 lines per image.
+
+The table above is the policy: which Alpine release and which PHP series each
+directory takes. Its patch versions are a snapshot of the day the table was
+written — for the exact numbers, ask the image. `CHANGELOG.md` holds the changes
+that matter (a series added or dropped, a base moved, a pin introduced), each
+entry with the versions the images carried at that moment.
+
+
 ## Publishing
 
 `buildx.sh` builds every directory for `linux/amd64` and `linux/arm64`, pushes
@@ -59,6 +91,12 @@ sets it to `8.5`, so a release candidate cannot take `latest`). It reads
 
 `BUILDX_CACHE=gha` turns on the GitHub Actions build cache. A failed cache
 does not block the build; the script retries without it.
+
+After the push of each image, the script runs it and prints
+`/etc/laserstack/versions.txt`, the file the image writes for itself (see "What
+is inside an image"). The versions of an image are therefore in the log of the
+run that published it, and — when a workflow runs the script — on the summary
+page of that run.
 
 `.github/workflows/nightly-publish.yml` runs the same script every night at
 01:00 UTC, and on demand from the Actions tab. It needs two repository
@@ -95,6 +133,7 @@ the workflow behaves exactly like the scheduled run.
 | `actions/checkout`, `docker/setup-qemu-action`, `renovatebot/github-action` | Pins each action to a commit digest, and keeps the pin current. The nightly publish runs with `HUB_PASSWORD`, so a moved tag is a supply chain risk |
 | `runs-on: ubuntu-24.04` | Opens a pull request for a newer Ubuntu runner |
 | `renovate-version` of `renovate.yml` | Bumps the pinned Renovate version. The manager reads the input of the action and knows the tag of the image |
+| `ARG COMPOSER_VERSION` of every Dockerfile | Bumps the pinned composer, through the marker comment above the line. The version is a packagist release, and one version serves every series: composer 2.x needs PHP 7.2.5 or newer |
 | `FROM alpine:` of `8.4` and `8.5` | Proposes a newer stable Alpine, and waits for approval on the dependency dashboard |
 
 Renovate never moves the `FROM alpine:` line of the other directories. The rule
@@ -109,7 +148,10 @@ Four items stay hand-managed, on purpose:
   back.
 - the PHP patch version. `buildx.sh` resolves it from apk at build time, from
   the `#PHP` marker of each Dockerfile.
-- the composer installer and the global `phpunit`, both fetched unpinned.
+- the `phpunit` of the images. `composer global require phpunit/phpunit`
+  resolves the newest phpunit that the series can run — 9.6 for 7.4 and 8.0,
+  10.5 for 8.1, 11.5 for 8.2, 12.5 for 8.3, 13.4 for 8.4 and newer. A pin would
+  replace that with a matrix of constraints per directory.
 - `prod/digests.lock`. Its digest is the one of the image the nightly publish
   pushed, and it changes every night, so Renovate would open a pull request
   every day. `./prod/build.sh --update` stays the checkpoint.
