@@ -73,6 +73,16 @@ UTC, and 2.11.2 appeared at 09:12 the same morning. That is the drift the pin of
 this entry removes — the next rebuild of a directory carries the pinned version
 whatever the installer offers.
 
-One fact the table makes visible: `node` in `7.4` and `8.0` is 16.20.2, because
-those directories take their node from Alpine 3.15 and 3.16. Node 16 is
-end-of-life, and no file said so before this table existed.
+### The old node in `7.4` and `8.0` stays
+
+The table makes one fact visible: `node` in `7.4` and `8.0` is 16.20.2, because
+those directories take their JavaScript toolchain from Alpine 3.15 and 3.16.
+Node 16 is end-of-life, and no file said so before the table existed.
+
+Decision: keep it. The JavaScript toolchain of an image follows the Alpine
+release of its directory — the same rule that fixes its PHP series — and a
+project that still needs PHP 7.4 or 8.0 is unlikely to run a newer node. The
+alternative is a second apk repository in those two directories, for a version
+that matches no other part of the image. So `7.4` and `8.0` carry node 16 until
+the day their Alpine release carries something else, and those two directories
+are frozen by the PHP series they serve.

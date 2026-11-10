@@ -20,6 +20,14 @@ package from the repository that has it.
 | `8.5`     | 3.24   | 8.5.12 | current stable                    |
 | `8.6`     | edge   | 8.6.0RC5 | release candidate, not `latest` |
 
+The JavaScript toolchain — `node`, `npm` and `yarn` — comes from the Alpine
+release of the directory, as do `nginx`, `git` and `supervisor`. `7.4` and `8.0`
+therefore carry node 16, the same age as their PHP series. That is deliberate: a
+project that still needs PHP 7.4 or 8.0 is unlikely to run a newer node, and the
+alternative is a second apk repository in those two directories, for a version
+that matches no other part of the image. The versions an image really has are in
+its own `/etc/laserstack/versions.txt`.
+
 The `8.6` directory builds: Alpine carries `php86` in the `edge/testing`
 repository, and the Dockerfile installs the series from there. PHP 8.6 has no
 stable release yet (GA is planned for 19 November 2026), so the image is a
