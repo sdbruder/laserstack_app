@@ -34,6 +34,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
+      # the action passes no repository to the container, and without one
+      # Renovate exits with "No repositories found"
+      RENOVATE_REPOSITORIES: ${{ github.repository }}
       # the default author is an address of the Renovate vendor; use the one
       # that GitHub attributes to the account behind the token
       RENOVATE_GIT_AUTHOR: "sdbruder <61145+sdbruder@users.noreply.github.com>"
