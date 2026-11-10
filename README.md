@@ -136,6 +136,28 @@ variable is necessary. Add `--platform=github`, with `RENOVATE_TOKEN` and
 those need a GitHub token for their lookup.
 
 
+## Access
+
+The repository is public: anyone can read, clone and fork it, and a fork is a
+separate repository, so a stranger cannot write here.
+
+Writing goes through a pull request. A ruleset protects `master`: deletion,
+force pushes and direct pushes are blocked, and the `build pull request` check
+must pass before a merge. Required approvals are zero, so the owner can merge a
+pull request without a second person, and a second person can be added to the
+repository later without a change here.
+
+Only the owner has write access: no collaborators, no deploy keys. Two things
+can still act on the repository, and both are deliberate:
+
+- the `renovate` workflow, with the `RENOVATE_TOKEN` secret. It writes branches
+  and pull requests, which the ruleset allows, and it cannot push to `master`.
+- the GITHUB_TOKEN of a workflow. The repository default is read-only, and each
+  workflow of this repository also states `permissions: contents: read`, so no
+  workflow can write to the repository at all. `buildx.sh` publishes to Docker
+  Hub instead.
+
+
 ## License
 
  Laser Stack (and this container image) is open-sourced software licensed under [BSD license](LICENSE.md).
