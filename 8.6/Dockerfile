@@ -33,9 +33,15 @@ RUN \
 # from the API) and Alpine has no php86-pecl-memcached yet. The other series
 # get it from apk above; add php86-pecl-memcached to that list when it exists.
 
+# composer, pinned: a rebuild of this directory gives the same composer, and
+# renovate.json5 keeps the pin current. One version serves every series:
+# composer 2.x needs PHP 7.2.5 or newer.
+# renovate: datasource=packagist depName=composer/composer
+ARG COMPOSER_VERSION=2.11.2
+
 RUN \
   curl -sS --location --output /tmp/composer-setup.php "https://getcomposer.org/installer" \
-  && php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer --quiet \
+  && php /tmp/composer-setup.php --version="${COMPOSER_VERSION}" --install-dir=/usr/local/bin --filename=composer --quiet \
   && rm /tmp/composer-setup.php \
   && /usr/local/bin/composer global require phpunit/phpunit \
   && ln -s /root/.composer/vendor/bin/phpunit /usr/local/bin/phpunit

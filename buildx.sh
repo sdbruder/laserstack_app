@@ -89,5 +89,14 @@ for version in $versions; do
       exit 1
     fi
   fi
+
+  # The versions of the tools the image carries, so the nightly log records
+  # what went in. The build pushed the image, so this pulls it back; a failure
+  # here must not fail the publish, the images are already up.
+  echo "$version tools ----------------------------"
+  dump='composer --version; php -v | head -n 1; phpunit --version; node --version; npm --version; yarn --version'
+  if ! docker run --pull always --rm --entrypoint /bin/bash "laserstack/app:$version" -lc "$dump"; then
+    echo "$version: cannot read the versions of the image" >&2
+  fi
 done
 docker buildx rm laserbuilder

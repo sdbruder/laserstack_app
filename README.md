@@ -60,6 +60,10 @@ sets it to `8.5`, so a release candidate cannot take `latest`). It reads
 `BUILDX_CACHE=gha` turns on the GitHub Actions build cache. A failed cache
 does not block the build; the script retries without it.
 
+After the push of each image, the script runs it and prints the versions of the
+tools it carries: composer, `php -v`, phpunit, node, npm and yarn. The versions
+of an image are therefore in the log of the run that published it.
+
 `.github/workflows/nightly-publish.yml` runs the same script every night at
 01:00 UTC, and on demand from the Actions tab. It needs two repository
 secrets:
@@ -95,6 +99,7 @@ the workflow behaves exactly like the scheduled run.
 | `actions/checkout`, `docker/setup-qemu-action`, `renovatebot/github-action` | Pins each action to a commit digest, and keeps the pin current. The nightly publish runs with `HUB_PASSWORD`, so a moved tag is a supply chain risk |
 | `runs-on: ubuntu-24.04` | Opens a pull request for a newer Ubuntu runner |
 | `renovate-version` of `renovate.yml` | Bumps the pinned Renovate version. The manager reads the input of the action and knows the tag of the image |
+| `ARG COMPOSER_VERSION` of every Dockerfile | Bumps the pinned composer, through the marker comment above the line. The version is a packagist release, and one version serves every series: composer 2.x needs PHP 7.2.5 or newer |
 | `FROM alpine:` of `8.4` and `8.5` | Proposes a newer stable Alpine, and waits for approval on the dependency dashboard |
 
 Renovate never moves the `FROM alpine:` line of the other directories. The rule
@@ -109,7 +114,10 @@ Four items stay hand-managed, on purpose:
   back.
 - the PHP patch version. `buildx.sh` resolves it from apk at build time, from
   the `#PHP` marker of each Dockerfile.
-- the composer installer and the global `phpunit`, both fetched unpinned.
+- the `phpunit` of the images. `composer global require phpunit/phpunit`
+  resolves the newest phpunit that the series can run — 9.6 for 7.4 and 8.0,
+  10.5 for 8.1, 11.5 for 8.2, 12.5 for 8.3, 13.4 for 8.4 and newer. A pin would
+  replace that with a matrix of constraints per directory.
 - `prod/digests.lock`. Its digest is the one of the image the nightly publish
   pushed, and it changes every night, so Renovate would open a pull request
   every day. `./prod/build.sh --update` stays the checkpoint.
