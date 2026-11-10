@@ -55,6 +55,31 @@ directory, to reproduce what the resolver already does.
 - The old `php81` branch was deleted; it was an ancestor of `master` and held
   nothing of its own.
 
+### The images are smoke tested before they are published
+
+`smoke.sh` starts one image the way a user starts it, and then asks it about
+itself. `buildx.sh` runs it on a local build and pushes only when it passes, so a
+broken image never reaches the registry; the build check of a pull request runs
+it for every directory that changes.
+
+What it proves, in about three seconds per image: supervisord keeps nginx and
+php-fpm running; the vhost answers a request through php-fpm, with the php
+version of the container in the answer; the php series is the series of the
+directory; every php package of that Dockerfile is loaded as an extension; xdebug
+runs in profile mode; composer and phpunit run, and the inventory agrees with
+what they report. The expectation for the extensions comes from the Dockerfile,
+so it cannot drift from the source — and 8.6 needs no exception for memcached,
+because the package it names in a comment is not one it installs.
+
+Verified on four series, and on three broken images that must fail: an Alpine
+image without supervisord (the container exits), a vhost whose fastcgi target is
+dead (answers 502), and a php-fpm pool that cannot bind (`BACKOFF` in
+`supervisorctl`).
+
+The inventory now replaces the pull that used to happen after the push: nothing
+comes back from the registry anymore, and the record in the log and the summary
+belongs to the image that was tested.
+
 ### Versions of the published images at 2026-11-10
 
 | dir | php | composer | phpunit | node | npm | yarn | nginx | git | supervisor | apk |

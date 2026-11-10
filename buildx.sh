@@ -68,6 +68,53 @@ for version in $versions; do
     cache=""
   fi
 
+  # 1. Build the platform of this machine and keep the image locally, so the
+  #    smoke test can start it. Nothing is published yet.
+  smoke="laserstack/app:smoke-$version"
+
+  # shellcheck disable=SC2086
+  load() {
+    docker \
+      buildx build \
+      --load \
+      --tag "$smoke" \
+      $cache \
+      .
+  }
+
+  if ! load; then
+    if [ -n "$cache" ]; then
+      # a broken cache must not block a release
+      echo "build $version with cache failed, retry without cache" >&2
+      cache=""
+      load
+    else
+      exit 1
+    fi
+  fi
+
+  # 2. Smoke test the image. A failure ends this function before the push, so a
+  #    broken image never reaches the registry.
+  "$base_dir/smoke.sh" "$smoke" "$version"
+
+  # 3. The inventory of the tested image, into the log and into the summary of
+  #    the run. It comes from the image itself and not from a second list that
+  #    can disagree with it, and it is printed before the push, so the record
+  #    survives a failed publish.
+  echo "$version tools ----------------------------"
+  dump="$(docker run --rm --entrypoint cat "$smoke" /etc/laserstack/versions.txt)"
+  printf '%s\n' "$dump"
+  if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+    {
+      printf '### laserstack/app:%s\n\n' "$version"
+      printf '| tool | version |\n| ---- | ------- |\n'
+      printf '%s\n' "$dump" | awk 'NF==2 {printf "| %s | %s |\n", $1, $2}'
+      printf '\n'
+    } >> "$GITHUB_STEP_SUMMARY"
+  fi
+
+  # 4. Publish both platforms. The layers of the test build are in the cache, so
+  #    this builds the other platform and pushes both.
   # shellcheck disable=SC2086
   build() {
     docker \
@@ -81,8 +128,7 @@ for version in $versions; do
 
   if ! build; then
     if [ -n "$cache" ]; then
-      # a broken cache must not block a release
-      echo "build $version with cache failed, retry without cache" >&2
+      echo "push of $version with cache failed, retry without cache" >&2
       cache=""
       build
     else
@@ -90,24 +136,7 @@ for version in $versions; do
     fi
   fi
 
-  # The versions of the tools the image carries. The image writes them at build
-  # time into /etc/laserstack/versions.txt, so there is one list and not two
-  # that can disagree. The build pushed the image, so this pulls it back; a
-  # failure here must not fail the publish, the images are already up.
-  echo "$version tools ----------------------------"
-  if dump="$(docker run --pull always --rm --entrypoint cat "laserstack/app:$version" /etc/laserstack/versions.txt 2>/dev/null)"; then
-    printf '%s\n' "$dump"
-    # a table on the page of the run, when a workflow runs this script
-    if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
-      {
-        printf '### laserstack/app:%s\n\n' "$version"
-        printf '| tool | version |\n| ---- | ------- |\n'
-        printf '%s\n' "$dump" | awk 'NF==2 {printf "| %s | %s |\n", $1, $2}'
-        printf '\n'
-      } >> "$GITHUB_STEP_SUMMARY"
-    fi
-  else
-    echo "$version: cannot read /etc/laserstack/versions.txt, the image predates the file" >&2
-  fi
+  # 5. The registry holds this content now; the local copy was for the test.
+  docker image rm "$smoke" >/dev/null 2>&1 || true
 done
 docker buildx rm laserbuilder
