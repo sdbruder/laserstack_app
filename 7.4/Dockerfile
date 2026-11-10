@@ -5,6 +5,8 @@ LABEL maintainer="Sergio Bruder"
 
 WORKDIR /var/www/html
 
+# sodium, xsl, pcntl and sockets are in the list below so that 7.4 carries the
+# same php surface as the newer series: Alpine 3.15 packages all four.
 RUN \
   apk update \
   && apk --no-cache upgrade \
@@ -16,6 +18,7 @@ RUN \
   php7-mbstring php7-opcache php7-iconv php7-intl php7-gd php7-session \
   php7-pecl-redis php7-pecl-memcached php7-mysqli php7-mysqlnd php7-pecl-xdebug \
   php7-curl curl libcurl php7-ctype php7-zip php7-pdo_sqlite php7-pdo_pgsql \
+  php7-sodium php7-xsl php7-pcntl php7-sockets \
   && ln -s /usr/bin/php7 /usr/local/bin/php \
   && rm -f /etc/nginx/http.d/*
 

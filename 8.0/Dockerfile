@@ -5,6 +5,8 @@ LABEL maintainer="Sergio Bruder"
 
 WORKDIR /var/www/html
 
+# sodium, xsl, pcntl and sockets are in the list below so that 8.0 carries the
+# same php surface as the newer series: Alpine 3.16 packages all four.
 RUN \
   apk update \
   && apk --no-cache upgrade \
@@ -16,6 +18,7 @@ RUN \
   php8-mbstring php8-opcache php8-iconv php8-intl php8-gd php8-session \
   php8-pecl-redis php8-pecl-memcached php8-mysqli php8-mysqlnd php8-pecl-xdebug \
   php8-curl curl libcurl php8-ctype php8-zip php8-pdo_sqlite php8-pdo_pgsql \
+  php8-sodium php8-xsl php8-pcntl php8-sockets \
   && ln -s /usr/bin/php8 /usr/local/bin/php \
   && rm -f /etc/nginx/http.d/*
 

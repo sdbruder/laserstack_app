@@ -92,11 +92,17 @@ sets it to `8.5`, so a release candidate cannot take `latest`). It reads
 `BUILDX_CACHE=gha` turns on the GitHub Actions build cache. A failed cache
 does not block the build; the script retries without it.
 
-After the push of each image, the script runs it and prints
-`/etc/laserstack/versions.txt`, the file the image writes for itself (see "What
-is inside an image"). The versions of an image are therefore in the log of the
-run that published it, and — when a workflow runs the script — on the summary
-page of that run.
+Before the push, the script builds the image for the platform of the machine,
+runs `smoke.sh` on it, and publishes both platforms only if that passes. The
+smoke test starts the container the way a user starts it and then asks the
+container about itself: supervisord keeps nginx and php-fpm running, the vhost
+answers through php-fpm, the php series matches the directory, every php package
+of the Dockerfile is loaded, xdebug runs in profile mode, composer and phpunit
+run, and `/etc/laserstack/versions.txt` agrees with what the tools report. A
+failure ends the run before anything reaches the registry.
+
+The inventory of the tested image goes to the log, and — when a workflow runs
+the script — to the summary page of the run.
 
 `.github/workflows/nightly-publish.yml` runs the same script every night at
 01:00 UTC, and on demand from the Actions tab. It needs two repository
@@ -157,10 +163,11 @@ Four items stay hand-managed, on purpose:
   every day. `./prod/build.sh --update` stays the checkpoint.
 
 `build-pull-request.yml` builds the images that a pull request changes, and
-pushes nothing: `docker build` for each changed version directory, and
-`./prod/build.sh` when a file under `prod/` or `examples/` changes. It is the
-check of a Renovate pull request, and it needs the full clone, because it diffs
-against the base branch. `buildx.sh` cannot serve: it logs in and pushes.
+pushes nothing: `docker build` and `./smoke.sh` for each changed version
+directory, and `./prod/build.sh` when a file under `prod/` or `examples/`
+changes. It is the check of a Renovate pull request, and it needs the full
+clone, because it diffs against the base branch. `buildx.sh` cannot serve: it
+logs in and pushes.
 
 Check a change of `renovate.json5` without a branch or a pull request:
 

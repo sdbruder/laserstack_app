@@ -55,6 +55,9 @@ jobs:
           for dir in $dirs; do
             echo "=== $dir ----------------------------"
             docker build --tag "laserstack/app:pr-$dir" "./$dir"
+            # the same smoke test that buildx.sh runs before its push, so a
+            # pull request fails here and not in the nightly publish
+            ./smoke.sh "laserstack/app:pr-$dir" "$dir"
           done
 
       - name: build the production overlay
