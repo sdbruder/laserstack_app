@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   publish:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 300
     env:
       # same names the build script reads from .env
