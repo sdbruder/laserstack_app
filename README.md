@@ -99,7 +99,10 @@ container about itself: supervisord keeps nginx and php-fpm running, the vhost
 answers through php-fpm, the php series matches the directory, every php package
 of the Dockerfile is loaded, xdebug runs in profile mode, composer and phpunit
 run, and `/etc/laserstack/versions.txt` agrees with what the tools report. A
-failure ends the run before anything reaches the registry.
+failure skips that series — nothing of it is published, since the smoke test runs
+immediately before its own push — and the run ends non-zero with the list of the
+series that were not published, because the versions are independent of each
+other.
 
 The inventory of the tested image goes to the log, and — when a workflow runs
 the script — to the summary page of the run.
