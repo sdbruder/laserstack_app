@@ -139,7 +139,8 @@ mode="$(docker exec "$name" php -r 'echo ini_get("xdebug.mode");')"
 [ "$mode" = "profile" ] || fail "xdebug.mode is '$mode', the images set profile"
 ok "xdebug runs in profile mode"
 
-inventory="$(docker exec "$name" cat /etc/laserstack/versions.txt)"
+inventory="$(docker exec "$name" cat /etc/laserstack/versions.txt 2>/dev/null)" || true
+[ -n "$inventory" ] || fail "the image carries no /etc/laserstack/versions.txt: an image from before that file existed has none, so pull the current image or build the directory"
 printf '%s\n' "$inventory" | grep -qx "php $php_version" \
   || fail "the inventory does not name php $php_version, it says: $(printf '%s' "$inventory" | tr '\n' ' ')"
 printf '%s\n' "$inventory" | grep -q '^composer ' || fail "the inventory has no composer line"

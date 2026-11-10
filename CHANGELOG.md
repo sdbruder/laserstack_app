@@ -86,6 +86,19 @@ stops the script before its last instruction, so without that trap the first
 good run would leave a builder and the next run would fail on `buildx create`
 instead of on the image.
 
+### 7.4 and 8.0 get the four extensions the other series carry
+
+The smoke test asked 7.4 for sodium and xsl and found neither, and 8.0 was the
+same. The check then followed each Dockerfile instead of a fixed list, which is
+the right rule for a check that must not drift from its source — but it also let
+the two oldest images stay smaller than the rest.
+
+Decision: make them equal. `php7-sodium php7-xsl php7-pcntl php7-sockets` in
+`7.4/Dockerfile`, and the `php8-` names in `8.0/Dockerfile`. Alpine 3.15 and 3.16
+package all four, so nothing else about those frozen images moves: the same
+Alpine release, the same PHP patch, the same composer pin. The smoke test derives
+its expectation from the Dockerfile, so from the next build on it requires them.
+
 ### Versions of the published images at 2026-11-10
 
 | dir | php | composer | phpunit | node | npm | yarn | nginx | git | supervisor | apk |
