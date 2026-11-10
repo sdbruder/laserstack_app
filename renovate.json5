@@ -2,9 +2,10 @@
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: ["config:recommended"],
 
-  // One weekly window, so a burst of PRs arrives together and not while the
-  // nightly publish runs.
-  schedule: ["before 6am on monday"],
+  // No schedule of its own: the only run is the cron of
+  // .github/workflows/renovate.yml (Monday 04:00 UTC), and a schedule here
+  // would turn a manual dispatch into a run that opens no branch. Add one if
+  // the workflow is ever run more often than the cadence of the branches.
 
   labels: ["dependencies"],
   prConcurrentLimit: 3,

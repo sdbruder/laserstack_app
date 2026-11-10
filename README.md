@@ -86,9 +86,9 @@ The `workflow` permission is necessary, because Renovate changes files in
 that a bot opens needs a manual approval before a workflow runs on it, and
 `build-pull-request.yml` is that workflow.
 
-The job runs every Monday at 04:00 UTC, inside the window that `renovate.json5`
-sets for the branches. A run outside that window opens no branch, and only
-reports on the dependency dashboard.
+The job runs every Monday at 04:00 UTC. That cron is the cadence of the
+branches: `renovate.json5` holds no schedule of its own, so a manual dispatch of
+the workflow behaves exactly like the scheduled run.
 
 | Item | What Renovate does |
 | ---- | ------------------ |

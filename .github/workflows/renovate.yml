@@ -16,9 +16,9 @@ name: renovate
 
 on:
   schedule:
-    # Monday, 04:00 UTC, inside the window that renovate.json5 sets for the
-    # branches ("before 6am on monday"); a run outside the window opens no
-    # branch and only reports on the dependency dashboard.
+    # Monday, 04:00 UTC. This cron is the cadence of the branches: the
+    # configuration file holds no schedule, so a manual dispatch opens the same
+    # branches at once.
     - cron: "0 4 * * 1"
   workflow_dispatch:
 

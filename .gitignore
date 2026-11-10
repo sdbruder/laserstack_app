@@ -1,1 +1,4 @@
 .env
+
+# a personal access token must never enter the repository
+renovate_token.txt
