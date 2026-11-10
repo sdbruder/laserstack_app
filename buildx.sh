@@ -44,7 +44,20 @@ docker login --username "$HUB_USER" --password "$HUB_PASSWORD"
 # this run's builder on any exit, not only at the end of the loop.
 docker buildx rm laserbuilder >/dev/null 2>&1 || true
 docker buildx create --name laserbuilder --use --bootstrap
-trap 'docker buildx rm laserbuilder >/dev/null 2>&1 || true' EXIT
+# One place that removes what a run can leave behind: the builder, and the local
+# copy of a tested image when a failure path ends the script before step 5.
+cleanup() {
+  [ -n "${smoke:-}" ] && docker image rm "$smoke" >/dev/null 2>&1
+  docker buildx rm laserbuilder >/dev/null 2>&1
+  return 0
+}
+trap cleanup EXIT
+
+# A series that fails is skipped and its name is kept for the end of the run. The
+# versions are independent: stopping at the first failure would leave the earlier
+# ones published and freeze the rest until the next night.
+failed=""
+
 for version in $versions; do
   if [ "$APP_LATEST" == "$version" ]; then
     EXTRA="--tag laserstack/app:latest"
@@ -88,20 +101,30 @@ for version in $versions; do
       .
   }
 
+  load_ok=1
   if ! load; then
     if [ -n "$cache" ]; then
       # a broken cache must not block a release
       echo "build $version with cache failed, retry without cache" >&2
       cache=""
-      load
+      load || load_ok=0
     else
-      exit 1
+      load_ok=0
     fi
   fi
+  if [ "$load_ok" = 0 ]; then
+    failed="$failed $version(build)"
+    continue
+  fi
 
-  # 2. Smoke test the image. A failure ends this function before the push, so a
-  #    broken image never reaches the registry.
-  "$base_dir/smoke.sh" "$smoke" "$version"
+  # 2. Smoke test the image, immediately before its own push, so no image can
+  #    reach the registry untested. A failure skips this series: nothing of it is
+  #    published, the other series still are, and the run ends non-zero.
+  if ! "$base_dir/smoke.sh" "$smoke" "$version"; then
+    failed="$failed $version(smoke)"
+    docker image rm "$smoke" >/dev/null 2>&1 || true
+    continue
+  fi
 
   # 3. The inventory of the tested image, into the log and into the summary of
   #    the run. It comes from the image itself and not from a second list that
@@ -132,16 +155,26 @@ for version in $versions; do
       .
   }
 
+  push_ok=1
   if ! build; then
     if [ -n "$cache" ]; then
       echo "push of $version with cache failed, retry without cache" >&2
       cache=""
-      build
+      build || push_ok=0
     else
-      exit 1
+      push_ok=0
     fi
+  fi
+  if [ "$push_ok" = 0 ]; then
+    failed="$failed $version(push)"
+    continue
   fi
 
   # 5. The registry holds this content now; the local copy was for the test.
   docker image rm "$smoke" >/dev/null 2>&1 || true
 done
+
+if [ -n "$failed" ]; then
+  echo "buildx.sh: not published:$failed" >&2
+  exit 1
+fi

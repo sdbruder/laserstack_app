@@ -86,6 +86,18 @@ stops the script before its last instruction, so without that trap the first
 good run would leave a builder and the next run would fail on `buildx create`
 instead of on the image.
 
+A series that fails no longer stops the run: the versions are independent, so the
+failure is recorded, that series is skipped, and the run ends non-zero with the
+list of what was not published:
+
+```
+buildx.sh: not published: 8.4(smoke)
+```
+
+The version that fails is never published — it is smoked immediately before its
+own push — and the versions after it still are. The `EXIT` trap removes the local
+copy of a tested image too, so no failure path leaves an image behind.
+
 ### 7.4 and 8.0 get the four extensions the other series carry
 
 The smoke test asked 7.4 for sodium and xsl and found neither, and 8.0 was the
