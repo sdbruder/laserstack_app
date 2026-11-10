@@ -57,5 +57,5 @@ jobs:
         with:
           # the github-actions manager tracks this input: it is the tag of the
           # ghcr.io/renovatebot/renovate image
-          renovate-version: 44.225.2
+          renovate-version: 44.226.0
           token: ${{ secrets.RENOVATE_TOKEN }}
