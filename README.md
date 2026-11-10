@@ -49,6 +49,30 @@ mysql client and the postgres client (`psql`, `pg_dump`) are installed, for
 `laserstack/app:<major.minor>`, and gives the `APP_LATEST` directory the
 `latest` tag.
 
+## What is inside an image
+
+Every image writes its own inventory at build time, so the answer to "which php,
+which composer, which node is in there" comes from the image and not from this
+file:
+
+```sh
+docker run --rm --entrypoint cat laserstack/app:8.5 /etc/laserstack/versions.txt
+docker run --rm --entrypoint cat laserstack/app:8.5 /etc/laserstack/packages.txt
+```
+
+`versions.txt` carries one tool per line: php, composer, phpunit, node, npm,
+yarn, nginx, git and supervisor. A tool that an image does not carry has no
+line, so the file of the production overlay is shorter than the file of the
+image it builds on. `packages.txt` is `apk info -v`, the whole apk inventory, at
+about 150 lines per image.
+
+The table above is the policy: which Alpine release and which PHP series each
+directory takes. Its patch versions are a snapshot of the day the table was
+written — for the exact numbers, ask the image. `CHANGELOG.md` holds the changes
+that matter (a series added or dropped, a base moved, a pin introduced), each
+entry with the versions the images carried at that moment.
+
+
 ## Publishing
 
 `buildx.sh` builds every directory for `linux/amd64` and `linux/arm64`, pushes
@@ -60,9 +84,11 @@ sets it to `8.5`, so a release candidate cannot take `latest`). It reads
 `BUILDX_CACHE=gha` turns on the GitHub Actions build cache. A failed cache
 does not block the build; the script retries without it.
 
-After the push of each image, the script runs it and prints the versions of the
-tools it carries: composer, `php -v`, phpunit, node, npm and yarn. The versions
-of an image are therefore in the log of the run that published it.
+After the push of each image, the script runs it and prints
+`/etc/laserstack/versions.txt`, the file the image writes for itself (see "What
+is inside an image"). The versions of an image are therefore in the log of the
+run that published it, and — when a workflow runs the script — on the summary
+page of that run.
 
 `.github/workflows/nightly-publish.yml` runs the same script every night at
 01:00 UTC, and on demand from the Actions tab. It needs two repository
