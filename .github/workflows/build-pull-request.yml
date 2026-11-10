@@ -1,0 +1,71 @@
+name: build pull request
+
+# Builds the images that a pull request changes, and pushes nothing. It is the
+# check for the pull requests of the renovate workflow: a base image that lost
+# its PHP series fails here, and not in the nightly publish.
+#
+# `buildx.sh` cannot do this: it logs in and pushes. The build below uses
+# `docker build`, the same build of `build.sh`, without the tags that move.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-pull-request-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # the diff needs the base branch, so a shallow clone will not do
+          fetch-depth: 0
+
+      - name: list the changed files
+        id: changed
+        env:
+          BASE_REF: ${{ github.base_ref || 'master' }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$BASE_REF"
+          files="$(git diff --name-only "origin/$BASE_REF...HEAD")"
+          echo "$files"
+          {
+            echo "files<<EOF"
+            echo "$files"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: build the changed images
+        env:
+          FILES: ${{ steps.changed.outputs.files }}
+        run: |
+          set -euo pipefail
+          dirs="$(printf '%s\n' "$FILES" | awk -F/ '$1 ~ /^[0-9]+\.[0-9]+$/ && $2 == "Dockerfile" { print $1 }' | sort -u)"
+          if [ -z "$dirs" ]; then
+            echo "no version directory changed"
+            exit 0
+          fi
+          for dir in $dirs; do
+            echo "=== $dir ----------------------------"
+            docker build --tag "laserstack/app:pr-$dir" "./$dir"
+          done
+
+      - name: build the production overlay
+        env:
+          FILES: ${{ steps.changed.outputs.files }}
+          APP_DOMAIN: pr.example.com
+        run: |
+          set -euo pipefail
+          if ! printf '%s\n' "$FILES" | grep -qE '^(prod|examples)/'; then
+            echo "no file of the production overlay changed"
+            exit 0
+          fi
+          # the digest of prod/digests.lock, built on top of the published base
+          ./prod/build.sh

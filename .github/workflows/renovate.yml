@@ -1,0 +1,58 @@
+name: renovate
+
+# Self-hosted Renovate. It reads renovate.json5 from the branch, so this
+# workflow needs no global configuration file of its own.
+#
+# The job needs the repository secret RENOVATE_TOKEN:
+#
+#   classic token      scopes `public_repo` and `workflow`
+#   fine-grained token Contents, Pull requests, Issues and Workflows, read and
+#                      write on this repository
+#
+# The `workflow` permission is the one that the github-actions manager needs to
+# change a file in .github/workflows. Do not use the job GITHUB_TOKEN: the
+# pull requests of a bot need a manual approval before a workflow runs on them,
+# and the build workflow of this repository is that workflow.
+
+on:
+  schedule:
+    # Monday, 04:00 UTC, inside the window that renovate.json5 sets for the
+    # branches ("before 6am on monday"); a run outside the window opens no
+    # branch and only reports on the dependency dashboard.
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: renovate
+  cancel-in-progress: false
+
+jobs:
+  renovate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      # the default author is an address of the Renovate vendor; use the one
+      # that GitHub attributes to the account behind the token
+      RENOVATE_GIT_AUTHOR: "sdbruder <61145+sdbruder@users.noreply.github.com>"
+    steps:
+      - name: check the renovate token
+        run: |
+          if [ -z "${RENOVATE_TOKEN}" ]; then
+            echo "::error::add the repository secret RENOVATE_TOKEN (classic token with the scopes public_repo and workflow, or a fine-grained token with Contents, Pull requests, Issues and Workflows read and write)"
+            exit 1
+          fi
+        env:
+          RENOVATE_TOKEN: ${{ secrets.RENOVATE_TOKEN }}
+
+      - uses: actions/checkout@v7
+
+      - name: run renovate
+        uses: renovatebot/github-action@v46.3.13
+        with:
+          # the github-actions manager tracks this input: it is the tag of the
+          # ghcr.io/renovatebot/renovate image
+          renovate-version: 44.225.2
+          token: ${{ secrets.RENOVATE_TOKEN }}

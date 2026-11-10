@@ -72,15 +72,29 @@ secrets:
 
 ## Dependency updates
 
-`renovate.json5` configures [Renovate](https://docs.renovatebot.com/). The
-repository is public, so the hosted app needs no secret: install
-[the Renovate app](https://github.com/apps/renovate) on the repository, and it
-reads the config from `master`.
+`renovate.json5` configures [Renovate](https://docs.renovatebot.com/), and
+`.github/workflows/renovate.yml` runs it on this repository. The run is
+self-hosted: it uses a token of this repository, and not the hosted app. It
+needs one repository secret:
+
+| Secret          | Value                                                           |
+| --------------- | --------------------------------------------------------------- |
+| `RENOVATE_TOKEN` | classic token with the scopes `public_repo` and `workflow`, or a fine-grained token of this repository with Contents, Pull requests, Issues and Workflows set to read and write |
+
+The `workflow` permission is necessary, because Renovate changes files in
+`.github/workflows`. The GITHUB_TOKEN of the job will not do: a pull request
+that a bot opens needs a manual approval before a workflow runs on it, and
+`build-pull-request.yml` is that workflow.
+
+The job runs every Monday at 04:00 UTC, inside the window that `renovate.json5`
+sets for the branches. A run outside that window opens no branch, and only
+reports on the dependency dashboard.
 
 | Item | What Renovate does |
 | ---- | ------------------ |
-| `actions/checkout`, `docker/setup-qemu-action` | Pins each action to a commit digest, and keeps the pin current. The workflow runs with `HUB_PASSWORD`, so a moved tag is a supply chain risk |
+| `actions/checkout`, `docker/setup-qemu-action`, `renovatebot/github-action` | Pins each action to a commit digest, and keeps the pin current. The nightly publish runs with `HUB_PASSWORD`, so a moved tag is a supply chain risk |
 | `runs-on: ubuntu-24.04` | Opens a pull request for a newer Ubuntu runner |
+| `renovate-version` of `renovate.yml` | Bumps the pinned Renovate version. The manager reads the input of the action and knows the tag of the image |
 | `FROM alpine:` of `8.4` and `8.5` | Proposes a newer stable Alpine, and waits for approval on the dependency dashboard |
 
 Renovate never moves the `FROM alpine:` line of the other directories. The rule
@@ -99,6 +113,12 @@ Four items stay hand-managed, on purpose:
 - `prod/digests.lock`. Its digest is the one of the image the nightly publish
   pushed, and it changes every night, so Renovate would open a pull request
   every day. `./prod/build.sh --update` stays the checkpoint.
+
+`build-pull-request.yml` builds the images that a pull request changes, and
+pushes nothing: `docker build` for each changed version directory, and
+`./prod/build.sh` when a file under `prod/` or `examples/` changes. It is the
+check of a Renovate pull request, and it needs the full clone, because it diffs
+against the base branch. `buildx.sh` cannot serve: it logs in and pushes.
 
 Check a change of `renovate.json5` without a branch or a pull request:
 
