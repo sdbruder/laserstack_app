@@ -1,0 +1,73 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: ["config:recommended"],
+
+  // One weekly window, so a burst of PRs arrives together and not while the
+  // nightly publish runs.
+  schedule: ["before 6am on monday"],
+
+  labels: ["dependencies"],
+  prConcurrentLimit: 3,
+
+  packageRules: [
+    {
+      // Actions run with HUB_USER and HUB_PASSWORD in the environment, so a
+      // moved tag is a supply chain risk. Pin the commit digest, and let
+      // Renovate keep the pins current.
+      description: "pin GitHub Actions to a digest (the workflow holds Docker Hub credentials)",
+      matchManagers: ["github-actions"],
+      matchDepTypes: ["action"],
+      pinDigests: true,
+    },
+    {
+      // README: an image runs on the newest Alpine release that still packages
+      // its PHP series. The directory of an end-of-life series therefore holds
+      // the last Alpine that carries it: 7.4 -> 3.15, 8.0 -> 3.16, and so on.
+      // Renovate can only see "a newer Alpine exists", not "the newer Alpine
+      // still has phpXY", so it must not move these tags.
+      description: "PHP 7.4 - 8.3: the base is the last Alpine that carries the series, never bump it",
+      matchFileNames: [
+        "7.4/Dockerfile",
+        "8.0/Dockerfile",
+        "8.1/Dockerfile",
+        "8.2/Dockerfile",
+        "8.3/Dockerfile",
+      ],
+      matchDatasources: ["docker"],
+      enabled: false,
+    },
+    {
+      // 8.4 and 8.5 sit on the current stable Alpine. A newer stable release
+      // carries both series, so the bump is correct, but the same Alpine drops
+      // the older series, and only the directory list in README.md records
+      // which one. Approve the bump on the dependency dashboard.
+      description: "PHP 8.4 and 8.5: a newer stable Alpine is a valid bump, but wait for approval",
+      matchFileNames: ["8.4/Dockerfile", "8.5/Dockerfile"],
+      matchDatasources: ["docker"],
+      dependencyDashboardApproval: true,
+    },
+    {
+      // 8.6 sits on alpine:edge, a moving tag with no version to compare.
+      description: "PHP 8.6: alpine:edge has no version, nothing to update",
+      matchFileNames: ["8.6/Dockerfile"],
+      matchDatasources: ["docker"],
+      enabled: false,
+    },
+  ],
+
+  // Not managed, on purpose:
+  //
+  // - the apk packages (php85-fpm, php85-pecl-redis, ...). Renovate reads
+  //   them (datasource apk) and skips them as `unspecified-version`, because
+  //   no Dockerfile writes a package version. Keep it that way: the nightly
+  //   publish rebuilds every image with `apk upgrade`, so a pin would only
+  //   hold every image back.
+  // - the PHP patch version. It is not written in a file: buildx.sh resolves
+  //   it from apk at build time, from the `#PHP` marker of each Dockerfile.
+  // - the composer installer and the global phpunit, both unpinned and fetched
+  //   by the Dockerfiles. Add a COMPOSER_VERSION build argument with a
+  //   `# renovate:` comment if these must be tracked.
+  // - prod/digests.lock. Its digest is the one of the image the nightly
+  //   publish pushed, which changes every night, so Renovate would open a PR
+  //   every day. `./prod/build.sh --update` stays the checkpoint.
+}

@@ -70,6 +70,52 @@ secrets:
 | `HUB_PASSWORD` | Docker Hub access token with read and write access |
 
 
+## Dependency updates
+
+`renovate.json5` configures [Renovate](https://docs.renovatebot.com/). The
+repository is public, so the hosted app needs no secret: install
+[the Renovate app](https://github.com/apps/renovate) on the repository, and it
+reads the config from `master`.
+
+| Item | What Renovate does |
+| ---- | ------------------ |
+| `actions/checkout`, `docker/setup-qemu-action` | Pins each action to a commit digest, and keeps the pin current. The workflow runs with `HUB_PASSWORD`, so a moved tag is a supply chain risk |
+| `runs-on: ubuntu-24.04` | Opens a pull request for a newer Ubuntu runner |
+| `FROM alpine:` of `8.4` and `8.5` | Proposes a newer stable Alpine, and waits for approval on the dependency dashboard |
+
+Renovate never moves the `FROM alpine:` line of the other directories. The rule
+above, "the newest Alpine release that still packages that series", is not
+visible to Renovate: the Alpine that adds a release drops an older series, so
+`7.4` to `8.3` hold the last Alpine that carries their series.
+
+Four items stay hand-managed, on purpose:
+
+- the apk packages. No Dockerfile writes a version, and the nightly publish
+  rebuilds every image with `apk upgrade`, so a pin would hold every image
+  back.
+- the PHP patch version. `buildx.sh` resolves it from apk at build time, from
+  the `#PHP` marker of each Dockerfile.
+- the composer installer and the global `phpunit`, both fetched unpinned.
+- `prod/digests.lock`. Its digest is the one of the image the nightly publish
+  pushed, and it changes every night, so Renovate would open a pull request
+  every day. `./prod/build.sh --update` stays the checkpoint.
+
+Check a change of `renovate.json5` without a branch or a pull request:
+
+```sh
+docker run --rm -v "$PWD":/usr/src/app -w /usr/src/app \
+  -e RENOVATE_CONFIG_FILE=/usr/src/app/renovate.json5 \
+  renovate/renovate --platform=local --dry-run=lookup
+```
+
+The command prints every dependency it found and every update it would propose.
+`--dry-run=extract` stops after the dependency extraction. The `local` platform
+does not read the config of the repository, so the `RENOVATE_CONFIG_FILE`
+variable is necessary. Add `--platform=github`, with `RENOVATE_TOKEN` and
+`RENOVATE_REPOSITORIES=<owner>/<repo>`, to include the actions of the workflow:
+those need a GitHub token for their lookup.
+
+
 ## License
 
  Laser Stack (and this container image) is open-sourced software licensed under [BSD license](LICENSE.md).
