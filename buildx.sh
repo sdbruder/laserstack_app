@@ -45,10 +45,14 @@ docker login --username "$HUB_USER" --password "$HUB_PASSWORD"
 docker buildx rm laserbuilder >/dev/null 2>&1 || true
 docker buildx create --name laserbuilder --use --bootstrap
 # One place that removes what a run can leave behind: the builder, and the local
-# copy of a tested image when a failure path ends the script before step 5.
+# copy of a tested image when a failure path ends the script before step 5. Every
+# command is silenced and made immune to `set -e`, and that is what the `|| true`
+# is for: for the last series the image is already gone by the time this runs, and
+# a failing command in an EXIT trap makes a successful run exit non-zero without a
+# single line in the log — the whole eight-series nightly, published, red.
 cleanup() {
-  [ -n "${smoke:-}" ] && docker image rm "$smoke" >/dev/null 2>&1
-  docker buildx rm laserbuilder >/dev/null 2>&1
+  [ -n "${smoke:-}" ] && docker image rm "$smoke" >/dev/null 2>&1 || true
+  docker buildx rm laserbuilder >/dev/null 2>&1 || true
   return 0
 }
 trap cleanup EXIT
