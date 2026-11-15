@@ -96,7 +96,10 @@ buildx.sh: not published: 8.4(smoke)
 
 The version that fails is never published — it is smoked immediately before its
 own push — and the versions after it still are. The `EXIT` trap removes the local
-copy of a tested image too, so no failure path leaves an image behind.
+copy of a tested image too, so no failure path leaves an image behind, and every
+command in it carries `|| true`: for the last series the image is already gone by
+then, and a cleanup command that fails under `set -e` makes a successful run exit
+non-zero with nothing at all in the log.
 
 ### 7.4 and 8.0 get the four extensions the other series carry
 
