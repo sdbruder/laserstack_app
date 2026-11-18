@@ -107,9 +107,11 @@ other.
 The inventory of the tested image goes to the log, and — when a workflow runs
 the script — to the summary page of the run.
 
-`.github/workflows/nightly-publish.yml` runs the same script every night at
-01:00 UTC, and on demand from the Actions tab. It needs two repository
-secrets:
+`.github/workflows/nightly-publish.yml` runs the same script every night,
+scheduled for 00:23 UTC, and on demand from the Actions tab. The minute is
+deliberate: GitHub queues a scheduled run instead of starting it, and a run asked
+for on the hour waits longest — with `0 1 * * *` the runs of 11–18 November all
+started between 07:27 and 08:54 UTC. It needs two repository secrets:
 
 | Secret         | Value                                            |
 | -------------- | ------------------------------------------------ |
