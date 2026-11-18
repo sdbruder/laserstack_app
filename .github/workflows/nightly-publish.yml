@@ -2,8 +2,10 @@ name: nightly publish
 
 on:
   schedule:
-    # every night, 01:00 UTC
-    - cron: "0 1 * * *"
+    # every night, 00:23 UTC: off the hour, because GitHub queues a scheduled run
+    # instead of starting it and the top of the hour is the worst time to ask.
+    # The runs of 11-18 November, at 01:00, all started between 07:27 and 08:54.
+    - cron: "23 0 * * *"
   workflow_dispatch:
 
 permissions:

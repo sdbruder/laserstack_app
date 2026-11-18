@@ -10,6 +10,18 @@ introduced, a layer added or removed. Each entry carries the versions the images
 had at the moment of the entry, so the history keeps the numbers without a file
 that goes stale the next morning.
 
+## 2026-11-18
+
+### The nightly is scheduled off the hour
+
+`cron: "23 0 * * *"` instead of `"0 1 * * *"`. GitHub queues a scheduled run
+instead of starting it, and the top of the hour is the worst time to ask: with
+the old value the eight scheduled runs of 11–18 November started between 07:27
+and 08:54 UTC, six to eight hours late, while the job itself takes about fifteen
+minutes. No image was ever late by a day, but the hour was unpredictable; 01:23
+makes the queue short and the morning predictable. The workflow and the README
+say so.
+
 ## 2026-11-10
 
 ### The composer of every image is pinned (#4)
