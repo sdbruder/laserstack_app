@@ -18,7 +18,7 @@ package from the repository that has it.
 | `8.3`     | 3.24   | 8.3.36 | bug and security fixes            |
 | `8.4`     | 3.24   | 8.4.27 | bug and security fixes            |
 | `8.5`     | 3.24   | 8.5.12 | current stable                    |
-| `8.6`     | edge   | 8.6.0RC5 | release candidate, not `latest` |
+| `8.6`     | edge   | 8.6.0  | released, not `latest`            |
 
 The JavaScript toolchain — `node`, `npm` and `yarn` — comes from the Alpine
 release of the directory, as do `nginx`, `git` and `supervisor`. `7.4` and `8.0`
@@ -29,12 +29,12 @@ that matches no other part of the image. The versions an image really has are in
 its own `/etc/laserstack/versions.txt`.
 
 The `8.6` directory builds: Alpine carries `php86` in the `edge/testing`
-repository, and the Dockerfile installs the series from there. PHP 8.6 has no
-stable release yet (GA is planned for 19 November 2026), so the image is a
-release candidate, and `latest` stays on `8.5` because
-`.github/workflows/nightly-publish.yml` sets `APP_LATEST=8.5`. When Alpine moves
-`php86` to `edge/community`, delete the `ARG PHP_REPO` line from
-`8.6/Dockerfile`; nothing else changes.
+repository, and the Dockerfile installs the series from there. PHP 8.6.0 was
+released on 19 November 2026, and Alpine packaged the release in `edge/testing`
+rather than promoting it straight to `edge/community`, so the pin stays until the
+promotion happens; delete the `ARG PHP_REPO` line then, and nothing else changes.
+`latest` stays on `8.5` because `.github/workflows/nightly-publish.yml` sets
+`APP_LATEST=8.5`.
 
 A directory whose series lives outside `main` and `community` names its
 repository in an `ARG PHP_REPO` line. `buildx.sh` reads that value, so the
@@ -86,7 +86,7 @@ entry with the versions the images carried at that moment.
 `buildx.sh` builds every directory for `linux/amd64` and `linux/arm64`, pushes
 `laserstack/app:<major.minor>` and `laserstack/app:<php-version>`, and gives
 `latest` to the newest directory (or to `APP_LATEST`, when set; the workflow
-sets it to `8.5`, so a release candidate cannot take `latest`). It reads
+sets it to `8.5`, so `latest` tracks 8.5 and not the 8.6 release). It reads
 `HUB_USER` and `HUB_PASSWORD` from the environment or from `.env`.
 
 `BUILDX_CACHE=gha` turns on the GitHub Actions build cache. A failed cache
