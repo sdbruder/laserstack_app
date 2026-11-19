@@ -3,9 +3,11 @@
 2026-11-18, updated 2026-11-19
 
 > **Update, 2026-11-19.** Alpine published `nginx 1.30.7-r0` for `v3.24` and
-> `edge`, and the nightly rebuilt `8.3` to `8.6` onto it, on both architectures.
-> The `8.2` and `8.1` images still wait for a backport, and `7.4` and `8.0` will
-> never receive one. See *What changed on 2026-11-19* below.
+> `edge`, and `1.28.3-r8` for `v3.22` and `v3.23`. The nightly rebuilt `8.3` to
+> `8.6` onto the first, and caught the second on amd64 only: the arm64 leg of `8.2`
+> still resolved `r7`, so a dispatch at 12:40 UTC rebuilt both legs, and the two
+> architectures carry `r8` since. `8.1` still waits for a backport, and `7.4` and
+> `8.0` will never receive one. See *What changed on 2026-11-19* below.
 
 ## The vulnerabilities
 
@@ -73,7 +75,7 @@ in `edge`; `v3.19`, `v3.22`, `v3.16` and `v3.15` are unchanged.
 | `7.4` | 3.15 | 1.20.2-r2 | 1.20.2-r2 | no, and never: 3.15 is end of life |
 | `8.0` | 3.16 | 1.22.1-r1 | 1.22.1-r1 | no, and never: 3.16 is end of life |
 | `8.1` | 3.19 | 1.24.0-r16 | 1.24.0-r16 | no, a backport is still expected |
-| `8.2` | 3.22 | 1.28.3-r7 | 1.28.3-r7 | no, a backport is still expected |
+| `8.2` | 3.22 | 1.28.3-r7 | **1.28.3-r8** | yes, after the arm64 leg was rebuilt on 19 November |
 | `8.3` | 3.24 | 1.30.6-r0 | **1.30.7-r0** | yes |
 | `8.4` | 3.24 | 1.30.6-r0 | **1.30.7-r0** | yes |
 | `8.5` | 3.24 | 1.30.6-r0 | **1.30.7-r0** | yes |
@@ -92,10 +94,12 @@ nginx 1.30.7
 ```
 
 `8.2` is the series a stack runs by default, and the stack's HTTPS vhost listens
-with the `http2` parameter, so a stack that publishes 443 is exposed until Alpine
-backports the fix to `3.22`. The ways out are to run a series that is already
-fixed (`8.3`, `8.4`, `8.5`, `8.6`), to move that image to a newer Alpine, or to
-take the `http2` parameter off the vhosts.
+with the `http2` parameter, so that image was exposed while it carried `1.28.3-r7`.
+Alpine backported the fix to `3.22` as `r8`; the nightly of 19 November caught it
+on amd64, and a dispatch at 12:40 UTC the same day rebuilt the arm64 leg onto it,
+so both architectures carry `r8`. The part worth keeping is that the two legs of a
+single build can resolve different revisions of a package: check both with
+`--platform`, and rebuild rather than assume.
 
 Note also what the name `nginx` resolves to. `apk info nginx` lists openresty too,
 because openresty provides the same name. The installed package is Alpine's own:
@@ -146,8 +150,8 @@ shape, and both become reachable from the network.
 ## If you terminate TLS in this container
 
 - keep HTTP/2 off, or patch nginx to 1.30.7+, until the image carries the fix —
-  `8.3` to `8.6` carry it since 2026-11-19, `8.1` and `8.2` do not yet, and `7.4`
-  and `8.0` never will
+  `8.2` to `8.6` carry it since 2026-11-19, `8.1` does not yet, and `7.4` and
+  `8.0` never will
 - or front the container with a proxy that terminates TLS and let it serve plain
   HTTP. That is already the topology this repository recommends: TLS and HTTP/2
   belong to the balancer in front, and the example vhost expects `$forwarded_https`
@@ -167,8 +171,9 @@ curl -sL https://dl-cdn.alpinelinux.org/alpine/v3.24/main/aarch64/APKINDEX.tar.g
 Alpine took the upstream release rather than backporting onto the old one: `v3.24`
 moved from `1.30.6-r0` to `1.30.7-r0`, and `edge` from `1.30.6-r1` to the same
 `1.30.7-r0`, not to the `1.31.9` mainline that edge follows when it can. `v3.19`
-(`1.24.0-r16`), `v3.22` (`1.28.3-r7`), `v3.16` and `v3.15` did not move, so the
-guess held for them: `8.1` and `8.2` wait for a backport, and the 3.15 of `7.4`
+(`1.24.0-r16`), `v3.16` and `v3.15` did not move, and `v3.22` still read
+`1.28.3-r7` at that moment — it moved to `1.28.3-r8` later the same day. So the
+guess held for `8.1`, which waits for a backport, and the 3.15 of `7.4`
 and the 3.16 of `8.0` will receive nothing — both branches are end of life, and no
 newer Alpine branch carries PHP 7.4 or PHP 8.0 either, so those two images cannot
 be fixed by an Alpine update, only by an nginx from outside Alpine or by retiring
