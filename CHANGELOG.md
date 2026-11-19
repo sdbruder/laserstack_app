@@ -10,6 +10,16 @@ introduced, a layer added or removed. Each entry carries the versions the images
 had at the moment of the entry, so the history keeps the numbers without a file
 that goes stale the next morning.
 
+## 2026-11-19
+
+### The nightly asks two hours earlier
+
+`cron: "23 22 * * *"` instead of `"23 0 * * *"`. The reason the request moved is
+the queue delay itself: the first run on the 00:23 value, on 19 November, started
+at 07:38 UTC, seven hours and fifteen minutes late, the same band as the `0 1 * * *`
+runs before it, so moving the request is what moves the publish. The off-minute
+stays.
+
 ## 2026-11-18
 
 ### The nightly is scheduled off the hour
