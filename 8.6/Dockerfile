@@ -1,5 +1,6 @@
-# php86 is in edge/testing only. It moves to edge/community when PHP 8.6 is
-# released, and this image then loses the testing repository.
+# php86 is in edge/testing. PHP 8.6.0 was released on 2026-11-19 and Alpine
+# packaged it there first; when the package is promoted to edge/community, this
+# image loses the testing repository and the ARG below.
 FROM alpine:edge
 #PHP php86
 
@@ -28,7 +29,7 @@ RUN \
   && rm -f /etc/nginx/http.d/* \
   && echo "$PHP_REPO" >> /etc/apk/repositories
 
-# php86 is a release candidate and carries no memcached extension: pecl's
+# php86 carries no memcached extension yet: pecl's
 # memcached 3.4.0 does not build against it (XtOffsetOf and zval_dtor are gone
 # from the API) and Alpine has no php86-pecl-memcached yet. The other series
 # get it from apk above; add php86-pecl-memcached to that list when it exists.

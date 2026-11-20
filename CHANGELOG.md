@@ -20,6 +20,15 @@ at 07:38 UTC, seven hours and fifteen minutes late, the same band as the `0 1 * 
 runs before it, so moving the request is what moves the publish. The off-minute
 stays.
 
+### 8.6 is the release, still from the testing repository
+
+PHP 8.6.0 was released on 19 November 2026, and Alpine packaged it in
+`edge/testing` instead of promoting it straight to `edge/community`. The image
+therefore stops publishing `8.6.0RC7` and publishes `8.6.0`, while keeping its
+`ARG PHP_REPO` pin: that pin is what makes the package visible to
+`alpine:edge` today. It goes when Alpine promotes the package, and the comments
+and the README now say so.
+
 ## 2026-11-18
 
 ### The nightly is scheduled off the hour
