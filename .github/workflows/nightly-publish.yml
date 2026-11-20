@@ -26,8 +26,8 @@ jobs:
       HUB_USER: ${{ secrets.HUB_USER }}
       HUB_PASSWORD: ${{ secrets.HUB_PASSWORD }}
       BUILDX_CACHE: gha
-      # keep laserstack/app:latest on a released series: 8.6 is a release
-      # candidate, and without this line the newest directory would take it
+      # keep laserstack/app:latest on a released series: 8.6 is released too,
+      # and without this line the newest directory would take latest
       APP_LATEST: 8.5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
