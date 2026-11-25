@@ -21,9 +21,6 @@ set -euo pipefail
 #   - xdebug is loaded in profile mode, as php.ini of the image asks
 #   - the inventory of the image exists and is consistent with the php version
 #   - composer and phpunit run
-#
-# The memcached extension is required everywhere except 8.6: Alpine packages no
-# memcached for that series, see 8.6/Dockerfile.
 
 if [ "$#" -ne 2 ]; then
   echo "usage: $(basename "$0") <image> <php series>, for example: $(basename "$0") laserstack/app:8.5 8.5" >&2
@@ -110,9 +107,8 @@ modules="$(docker exec "$name" php -m)"
 
 # The extensions the image must load are the php packages its own Dockerfile
 # installs, so the expectation cannot drift from the source: a package that is
-# installed but not enabled as an extension fails here. Comments do not count —
-# 8.6 names php86-pecl-memcached in a comment to say that Alpine has no such
-# package — so the packages come from the instructions alone.
+# installed but not enabled as an extension fails here. Comments do not count,
+# so the packages come from the instructions alone.
 expected=""
 for package in $(sed -E 's/#.*$//' "$dockerfile" | grep -oE 'php[0-9]+-[a-zA-Z0-9_-]+' | sort -u); do
   extension="${package#php*-}"

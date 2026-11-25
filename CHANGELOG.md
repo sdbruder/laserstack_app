@@ -10,6 +10,21 @@ introduced, a layer added or removed. Each entry carries the versions the images
 had at the moment of the entry, so the history keeps the numbers without a file
 that goes stale the next morning.
 
+## 2026-11-25
+
+### The 8.6 image carries memcached
+
+Alpine published `php86-pecl-memcached` 3.4.0-r0 in `edge/testing` on 20
+November, built against 8.6.0, so the series takes the extension from apk like
+every other one. `8.6/Dockerfile` installs it, and the exception that the
+comment, `smoke.sh` and the README kept goes. The local build of the directory
+passes its smoke test with 27 php packages loaded; the table below is that
+image's own inventory.
+
+| dir | php | composer | phpunit | node | npm | yarn | nginx | git | supervisor | apk |
+| --- | --- | -------- | ------- | ---- | --- | ---- | ----- | --- | ---------- | --- |
+| `8.6` | 8.6.0 | 2.11.2 | 13.4.8 | 26.13.1 | 12.2.1 | 1.22.22 | 1.30.7 | 2.56.1 | 4.3.0 | 151 |
+
 ## 2026-11-19
 
 ### The nightly asks two hours earlier
@@ -99,8 +114,8 @@ version of the container in the answer; the php series is the series of the
 directory; every php package of that Dockerfile is loaded as an extension; xdebug
 runs in profile mode; composer and phpunit run, and the inventory agrees with
 what they report. The expectation for the extensions comes from the Dockerfile,
-so it cannot drift from the source — and 8.6 needs no exception for memcached,
-because the package it names in a comment is not one it installs.
+so it cannot drift from the source: a package a directory installs must load as
+an extension, and text in a comment does not count as an installation.
 
 Verified on four series, and on three broken images that must fail: an Alpine
 image without supervisord (the container exits), a vhost whose fastcgi target is

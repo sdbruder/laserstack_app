@@ -33,6 +33,8 @@ repository, and the Dockerfile installs the series from there. PHP 8.6.0 was
 released on 19 November 2026, and Alpine packaged the release in `edge/testing`
 rather than promoting it straight to `edge/community`, so the pin stays until the
 promotion happens; delete the `ARG PHP_REPO` line then, and nothing else changes.
+The same repository carries `php86-pecl-memcached` 3.4.0 since 20 November, so
+the image installs the extension with the rest of the series.
 `latest` stays on `8.5` because `.github/workflows/nightly-publish.yml` sets
 `APP_LATEST=8.5`.
 
@@ -46,9 +48,8 @@ are not `major.minor` are ignored. It is empty at the moment.
 Each image runs nginx (vhosts from `nginx-site.conf` on port 80) and php-fpm
 under supervisord. Xdebug is loaded with `xdebug.mode=profile`, and `phpunit`
 is the version `composer global require` resolved for that PHP series. Every
-image from `7.4` to `8.5` carries the `memcached` extension, so a client can use
-the memcached profile of the stack as a cache store. `8.6` does not: Alpine has
-no package for it and pecl's `memcached` 3.4.0 does not compile against 8.6. The
+image from `7.4` to `8.6` carries the `memcached` extension, so a client can use
+the memcached profile of the stack as a cache store. The
 mysql client and the postgres client (`psql`, `pg_dump`) are installed, for
 `laser mysql` and `laser psql` of
 [laserstack](https://github.com/sdbruder/laserstack).
