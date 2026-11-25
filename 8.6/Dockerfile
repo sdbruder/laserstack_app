@@ -22,17 +22,12 @@ RUN \
   php86 php86-fpm php86-phar php86-fileinfo php86-tokenizer php86-dom \
   php86-pcntl php86-xsl php86-sodium php86-pdo_pgsql \
   bash sudo vim less curl git supervisor yarn curl nginx npm nodejs \
-  php86-pecl-redis php86-mysqli php86-mysqlnd php86-pecl-xdebug \
+  php86-pecl-redis php86-pecl-memcached php86-mysqli php86-mysqlnd php86-pecl-xdebug \
   php86-curl curl libcurl php86-ctype php86-zip \
   php86-pdo_sqlite mysql-client postgresql-client gnu-libiconv \
   && ln -s /usr/bin/php86 /usr/local/bin/php \
   && rm -f /etc/nginx/http.d/* \
   && echo "$PHP_REPO" >> /etc/apk/repositories
-
-# php86 carries no memcached extension yet: pecl's
-# memcached 3.4.0 does not build against it (XtOffsetOf and zval_dtor are gone
-# from the API) and Alpine has no php86-pecl-memcached yet. The other series
-# get it from apk above; add php86-pecl-memcached to that list when it exists.
 
 # composer, pinned: a rebuild of this directory gives the same composer, and
 # renovate.json5 keeps the pin current. One version serves every series:
