@@ -2,12 +2,13 @@ name: nightly publish
 
 on:
   schedule:
-    # every night, 22:23 UTC: off the hour, because GitHub queues a scheduled run
+    # every night, 21:23 UTC: off the hour, because GitHub queues a scheduled run
     # instead of starting it and the top of the hour is the worst time to ask.
-    # The runs of 11-19 November, at 01:00 and then at 00:23, all started between
-    # 07:27 and 08:54 UTC, six to eight hours late, so asking two hours earlier is
-    # what publishes two hours earlier: the queue delay does not shrink.
-    - cron: "23 22 * * *"
+    # The runs on the 22:23 value, 20-24 November, started at 02:24 to 06:10 UTC,
+    # four to eight hours late, the same band as before the move, so an hour
+    # earlier in the request is an hour earlier in the publish: the queue delay
+    # does not shrink.
+    - cron: "23 21 * * *"
   workflow_dispatch:
 
 permissions:

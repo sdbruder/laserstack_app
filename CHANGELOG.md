@@ -12,6 +12,13 @@ that goes stale the next morning.
 
 ## 2026-11-25
 
+### The nightly asks one hour earlier
+
+`cron: "23 21 * * *"` instead of `"23 22 * * *"`. The runs on the 22:23 value,
+20 to 24 November, started at 02:24 to 06:10 UTC, four to eight hours late, the
+same band as before the move. The queue delay does not shrink, so one hour
+earlier in the request is one hour earlier in the publish.
+
 ### The 8.6 image carries memcached
 
 Alpine published `php86-pecl-memcached` 3.4.0-r0 in `edge/testing` on 20

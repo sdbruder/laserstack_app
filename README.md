@@ -109,12 +109,13 @@ The inventory of the tested image goes to the log, and — when a workflow runs
 the script — to the summary page of the run.
 
 `.github/workflows/nightly-publish.yml` runs the same script every night,
-scheduled for 22:23 UTC, and on demand from the Actions tab. The minute is
+scheduled for 21:23 UTC, and on demand from the Actions tab. The minute is
 deliberate: GitHub queues a scheduled run instead of starting it, and a run asked
 for on the hour waits longest — with `0 1 * * *` the runs of 11–18 November all
 started between 07:27 and 08:54 UTC. The hour moved from 00:23 to 22:23 on
-19 November, because the queue adds six to eight hours either way, so the earlier
-request is what publishes earlier. It needs two repository secrets:
+19 November, and to 21:23 on 25 November, because the queue adds four to eight
+hours either way, so the earlier request is what publishes earlier. It needs two
+repository secrets:
 
 | Secret         | Value                                            |
 | -------------- | ------------------------------------------------ |
